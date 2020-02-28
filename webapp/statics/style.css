@@ -1,0 +1,36 @@
+.divider_border{
+    border-right: 1px solid #e0e0e0;
+}
+.sidenav li>a{
+    padding-right: unset !important;
+    padding-left: 10px;
+}
+.sidenav li a .material-icons{
+    margin-right: 5px !important;
+}
+.sidenav{
+    padding-top:4vh !important;
+}
+.sidenav li{
+    margin-bottom: 1vh;
+}
+.switch label{
+    font-size: unset;
+    color: black;
+}
+.switch label .lever{
+    background-color: #84c7c1 !important;
+}
+ul.tabs{
+    height: 60px;
+}
+.tabs .tab a:focus, .tabs .tab a:focus.active {
+  background-color: rgba(0, 131, 143, 0.2);
+  outline: none;
+}
+li.indicator{
+    background-color: #00b2c2 !important;
+}
+.tabs .tab a{
+    color:#00838f !important;
+}
