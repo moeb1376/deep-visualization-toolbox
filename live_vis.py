@@ -21,10 +21,9 @@ from input_fetcher import InputImageFetcher
 
 pane_debug_clr = (255, 64, 64)
 
+
 class ImproperlyConfigured(Exception):
     pass
-
-
 
 
 class Pane(object):
@@ -40,7 +39,6 @@ class Pane(object):
         self.data = None    # eventually contains a slice of the window buffer
 
 
-
 class LiveVis(object):
     '''Runs the demo'''
 
@@ -54,7 +52,7 @@ class LiveVis(object):
         for module_path, app_name in settings.installed_apps:
             module = importlib.import_module(module_path)
             print 'got module', module
-            app_class  = getattr(module, app_name)
+            app_class = getattr(module, app_name)
             print 'got app', app_class
             self.app_classes[app_name] = app_class
 
@@ -78,7 +76,6 @@ class LiveVis(object):
             'clr': to_255(self.settings.help_clr),
             'thick': self.settings.help_thick
         }
-
 
     def init_window(self):
         cv2.namedWindow(self.window_name)
@@ -171,7 +168,7 @@ class LiveVis(object):
                 since_imshow = 0
                 last_render = now
 
-            #print '                                                         Number of keys:', len(keys)
+            #print 'Number of keys:', len(keys)
             for key in keys:
                 since_keypress = 0
                 #print 'Got Key:', key
@@ -352,7 +349,6 @@ class LiveVis(object):
 
         for app_name, app in self.apps.iteritems():
             locy = app.draw_help(self.help_pane, locy)
-
 
 
 if __name__ == '__main__':
