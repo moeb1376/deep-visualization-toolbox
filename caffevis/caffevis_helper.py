@@ -34,7 +34,7 @@ def get_pretty_layer_name(settings, layer_name):
     if hasattr(settings, 'caffevis_layer_pretty_name_fn'):
         ret = settings.caffevis_layer_pretty_name_fn(ret)
     if ret != layer_name:
-        print '  Prettified layer name: "%s" -> "%s"' % (layer_name, ret)
+        print ('  Prettified layer name: "%s" -> "%s"' % (layer_name, ret))
     return ret
 
 
@@ -114,10 +114,10 @@ def check_force_backward_true(prototxt_file):
                 break
 
     if not found:
-        print '\n\nWARNING: the specified prototxt'
-        print '"%s"' % prototxt_file
-        print 'does not contain the line "force_backward: true". This may result in backprop'
-        print 'and deconv producing all zeros at the input layer. You may want to add this line'
-        print 'to your prototxt file before continuing to force backprop to compute derivatives'
-        print 'at the data layer as well.\n\n'
+        print ('\n\nWARNING: the specified prototxt')
+        print ('"%s"' % prototxt_file)
+        print ('does not contain the line "force_backward: true". This may result in backprop')
+        print ('and deconv producing all zeros at the input layer. You may want to add this line')
+        print ('to your prototxt file before continuing to force backprop to compute derivatives')
+        print ('at the data layer as well.\n\n')
 

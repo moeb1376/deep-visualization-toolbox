@@ -26,8 +26,8 @@ class WithTimer:
     def __exit__(self, *args):
         if not self.quiet:
             titlestr = (' ' + self.title) if self.title else ''
-            print 'Elapsed%s: wall: %.06f, sys: %.06f' % ((titlestr,) + self.elapsed())
-
+            print ('Elapsed%s: wall: %.06f, sys: %.06f' % ((titlestr,) + self.elapsed())
+)
 
 
 def mkdir_p(path):

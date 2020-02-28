@@ -3,7 +3,7 @@
 import os
 import errno
 import pickle
-import StringIO
+from io import StringIO
 from pylab import *
 from scipy.ndimage.filters import gaussian_filter
 
@@ -69,7 +69,7 @@ class FindParams(object):
         self.push_unit = (self.push_channel,) + self.push_spatial
 
     def __str__(self):
-        ret = StringIO.StringIO()
+        ret = StringIO()
         print >>ret, 'FindParams:'
         for key in sorted(self.__dict__.keys()):
             print >>ret, '%30s: %s' % (key, self.__dict__[key])
@@ -136,7 +136,7 @@ class FindResults(object):
                 self.__dict__[key] = 'Trimmed %s' % valstr
 
     def __str__(self):
-        ret = StringIO.StringIO()
+        ret = StringIO()
         print >>ret, 'FindResults:'
         for key in sorted(self.__dict__.keys()):
             val = self.__dict__[key]
@@ -170,14 +170,14 @@ class GradientOptimizer(object):
     def run_optimize(self, params, prefix_template = None, brave = False, skipbig = False):
         '''All images are in Caffe format, e.g. shape (3, 227, 227) in BGR order.'''
 
-        print '\n\nStarting optimization with the following parameters:'
-        print params
+        print ('\n\nStarting optimization with the following parameters:')
+        print (params)
         
         x0 = self._get_x0(params)
         xx, results = self._optimize(params, x0)
         self.save_results(params, results, prefix_template, brave = brave, skipbig = skipbig)
 
-        print results.meta_result
+        print (results.meta_result)
         
         return xx
 
@@ -255,18 +255,18 @@ class GradientOptimizer(object):
             # 3. Print progress
             if ii > 0:
                 if params.lr_policy == 'progress':
-                    print '%-4d  progress predicted: %g, actual: %g' % (ii, pred_prog, obj - old_obj)
+                    print ('%-4d  progress predicted: %g, actual: %g' % (ii, pred_prog, obj - old_obj))
                 else:
-                    print '%-4d  progress: %g' % (ii, obj - old_obj)
+                    print ('%-4d  progress: %g' % (ii, obj - old_obj))
             else:
-                print '%d' % ii
+                print ('%d' % ii)
             old_obj = obj
 
             push_label_str = ('(%s)' % push_label) if is_labeled_unit else ''
             max_label_str  = ('(%s)' % self.labels[idxmax[0]]) if is_labeled_unit else ''
-            print '     push unit: %16s with value %g %s' % (params.push_unit, acts[params.push_unit], push_label_str)
-            print '       Max idx: %16s with value %g %s' % (idxmax, valmax, max_label_str)
-            print '             X:', xx.min(), xx.max(), norm(xx)
+            print ('     push unit: %16s with value %g %s' % (params.push_unit, acts[params.push_unit], push_label_str))
+            print ('       Max idx: %16s with value %g %s' % (idxmax, valmax, max_label_str))
+            print ('             X:', xx.min(), xx.max(), norm(xx))
 
 
             # 4. Do backward pass to get gradient
@@ -278,9 +278,9 @@ class GradientOptimizer(object):
             backout = self.net.backward_from_layer(params.push_layer, diffs if is_conv else diffs[:,:,0,0])
 
             grad = backout['data'].copy()
-            print '          grad:', grad.min(), grad.max(), norm(grad)
+            print ('          grad:', grad.min(), grad.max(), norm(grad))
             if norm(grad) == 0:
-                print 'Grad exactly 0, failed'
+                print ('Grad exactly 0, failed')
                 results.meta_result = 'Metaresult: grad 0 failure'
                 break
 
@@ -292,13 +292,13 @@ class GradientOptimizer(object):
                 desired_prog = min(params.lr_params['early_prog'], late_prog)
                 prog_lr = desired_prog / norm(grad)**2
                 lr = min(params.lr_params['max_lr'], prog_lr)
-                print '    desired progress:', desired_prog, 'prog_lr:', prog_lr, 'lr:', lr
+                print ('    desired progress:', desired_prog, 'prog_lr:', prog_lr, 'lr:', lr)
                 pred_prog = lr * dot(grad.flatten(), grad.flatten())
             elif params.lr_policy == 'progress':
                 # straight progress-based lr
                 prog_lr = params.lr_params['desired_prog'] / norm(grad)**2
                 lr = min(params.lr_params['max_lr'], prog_lr)
-                print '    desired progress:', params.lr_params['desired_prog'], 'prog_lr:', prog_lr, 'lr:', lr
+                print ('    desired progress:', params.lr_params['desired_prog'], 'prog_lr:', prog_lr, 'lr:', lr)
                 pred_prog = lr * dot(grad.flatten(), grad.flatten())
             elif params.lr_policy == 'constant':
                 # constant fixed learning rate
@@ -315,7 +315,7 @@ class GradientOptimizer(object):
 
                 if params.blur_every is not 0 and params.blur_radius > 0:
                     if params.blur_radius < .3:
-                        print 'Warning: blur-radius of .3 or less works very poorly'
+                        print ('Warning: blur-radius of .3 or less works very poorly')
                         #raise Exception('blur-radius of .3 or less works very poorly')
                     if ii % params.blur_every == 0:
                         for channel in range(3):
