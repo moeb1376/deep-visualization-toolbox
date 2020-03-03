@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import skimage.io
 import numpy as np
@@ -9,7 +9,7 @@ def shownet(net):
 
 	print('%-41s%-31s%s' % ('', 'acts', 'act diffs'))
 	print('%-45s%-31s%s' % ('', 'params', 'param diffs'))
-	for k, v in net.blobs.items():
+	for k, v in list(net.blobs.items()):
 		if k in net.params:
 			params = net.params[k]
 			for pp, blob in enumerate(params):

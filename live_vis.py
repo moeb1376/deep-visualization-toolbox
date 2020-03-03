@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import sys
 import importlib
@@ -102,7 +102,7 @@ class LiveVis(object):
                                      (max_i,max_j,1))
         #print 'BUFFER IS:', self.window_buffer.shape, self.window_buffer.min(), self.window_buffer.max()
 
-        for _,pane in self.panes.iteritems():
+        for _,pane in self.panes.items():
             pane.data = self.window_buffer[pane.i_begin:pane.i_end, pane.j_begin:pane.j_end]
 
         # Allocate help pane
@@ -125,7 +125,7 @@ class LiveVis(object):
         self.input_updater.start()
 
         heartbeat_functions = [self.input_updater.heartbeat]
-        for app_name, app in self.apps.iteritems():
+        for app_name, app in self.apps.items():
             print ('Starting app:', app_name)
             app.start()
             heartbeat_functions.extend(app.get_heartbeats())
@@ -178,13 +178,13 @@ class LiveVis(object):
                 key,do_redraw = self.handle_key_pre_apps(key)
                 redraw_needed |= do_redraw
                 imshow_needed |= do_redraw
-                for app_name, app in self.apps.iteritems():
+                for app_name, app in self.apps.items():
                     with WithTimer('%s:handle_key' % app_name, quiet = self.debug_level < 1):
                         key = app.handle_key(key, self.panes)
                 key = self.handle_key_post_apps(key)
                 if self.quit:
                     break
-            for app_name, app in self.apps.iteritems():
+            for app_name, app in self.apps.items():
                 redraw_needed |= app.redraw_needed()
 
             # Grab latest frame from input_updater thread
@@ -204,7 +204,7 @@ class LiveVis(object):
                                since_keypress >= self.settings.keypress_pause_handle_iterations)
             if frame_for_apps is not None and do_handle_input:
                 # Pass frame to apps for processing
-                for app_name, app in self.apps.iteritems():
+                for app_name, app in self.apps.items():
                     with WithTimer('%s:handle_input' % app_name, quiet = self.debug_level < 1):
                         app.handle_input(latest_frame_data, self.panes)
                 frame_for_apps = None
@@ -214,7 +214,7 @@ class LiveVis(object):
                          (since_keypress >= self.settings.keypress_pause_redraw_iterations or
                           since_redraw >= self.settings.redraw_at_least_every))
             if redraw_needed and do_redraw:
-                for app_name, app in self.apps.iteritems():
+                for app_name, app in self.apps.items():
                     with WithTimer('%s:draw' % app_name, quiet = self.debug_level < 1):
                         imshow_needed |= app.draw(self.panes)
                 redraw_needed = False
@@ -224,7 +224,7 @@ class LiveVis(object):
             if imshow_needed:
                 # Only redraw pane debug if display will be updated
                 if hasattr(self.settings, 'debug_window_panes') and self.settings.debug_window_panes:
-                    for pane_name,pane in self.panes.iteritems():
+                    for pane_name,pane in self.panes.items():
                         print (pane_name, pane)
                         pane.data[:] = pane.data * .5
                         line = [FormattedString('%s |' % pane_name, self.debug_pane_defaults),
@@ -263,7 +263,7 @@ class LiveVis(object):
         else:
             self.input_updater.free_camera()
 
-        for app_name, app in self.apps.iteritems():
+        for app_name, app in self.apps.items():
             print ('Quitting app:', app_name)
             app.quit()
 
@@ -292,7 +292,7 @@ class LiveVis(object):
             print ('Stretch mode is now', self.input_updater.static_file_stretch_mode)
         elif tag == 'debug_level':
             self.debug_level = (self.debug_level + 1) % 3
-            for app_name, app in self.apps.iteritems():
+            for app_name, app in self.apps.items():
                 app.set_debug(self.debug_level)
         else:
             return key, False

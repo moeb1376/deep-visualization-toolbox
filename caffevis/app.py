@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # -*- coding: utf-8
 
 import sys
@@ -98,7 +98,8 @@ class CaffeVisApp(BaseApp):
 			excess_w = self._data_mean.shape[2] - input_shape[1]
 			assert excess_h >= 0 and excess_w >= 0, 'mean should be at least as large as %s' % repr(input_shape)
 			print(excess_h, input_shape, excess_w, type(self._data_mean))
-			self._data_mean = self._data_mean[:, (excess_h / 2):(excess_h / 2 + input_shape[0]), (excess_w / 2):(excess_w / 2 + input_shape[1])]
+			self._data_mean = self._data_mean[:, (excess_h // 2):(excess_h // 2 + input_shape[0]),
+			                  (excess_w // 2):(excess_w // 2 + input_shape[1])]
 		elif settings.caffevis_data_mean is None:
 			self._data_mean = None
 		else:
@@ -134,7 +135,7 @@ class CaffeVisApp(BaseApp):
 		keyboard navigation).
 		'''
 		self.net_layer_info = {}
-		for key in self.net.blobs.keys():
+		for key in list(self.net.blobs.keys()):
 			self.net_layer_info[key] = {}
 			# Conv example: (1, 96, 55, 55)
 			# FC example: (1, 1000)
@@ -189,8 +190,9 @@ class CaffeVisApp(BaseApp):
 
 		print('CaffeVisApp: quitting.')
 
-	def _can_skip_all(self, panes):
-		return ('caffevis_layers' not in panes.keys())
+	@staticmethod
+	def _can_skip_all(panes):
+		return 'caffevis_layers' not in list(panes.keys())
 
 	def handle_input(self, input_image, panes):
 		if self.debug_level > 1:
@@ -327,24 +329,25 @@ class CaffeVisApp(BaseApp):
 		status = StringIO()
 		fps = self.proc_thread.approx_fps()
 		with self.state.lock:
-			print >> status, 'pattern' if self.state.pattern_mode else (
-				'back' if self.state.layers_show_back else 'fwd'),
-			print >> status, '%s:%d |' % (self.state.layer, self.state.selected_unit),
+			print('pattern' if self.state.pattern_mode else ('back' if self.state.layers_show_back else 'fwd'), end=' ',
+			      file=status)
+			print('%s:%d |' % (self.state.layer, self.state.selected_unit), end=' ', file=status)
 			if not self.state.back_enabled:
-				print >> status, 'Back: off',
+				print("Back: off", end=" ", file=status)
 			else:
-				print >> status, 'Back: %s' % ('deconv' if self.state.back_mode == 'deconv' else 'bprop'),
-				print >> status, '(from %s_%d, disp %s)' % (self.state.backprop_layer,
-				                                            self.state.backprop_unit,
-				                                            self.state.back_filt_mode),
-			print >> status, '|',
-			print >> status, 'Boost: %g/%g' % (self.state.layer_boost_indiv, self.state.layer_boost_gamma)
+				print('Back: %s' % ('deconv' if self.state.back_mode == 'deconv' else 'bprop'), end=" ", file=status)
+
+				print('(from %s_%d, disp %s)' % (
+					self.state.backprop_layer, self.state.backprop_unit, self.state.back_filt_mode), end=" ",
+				      file=status)
+			print("|", file=status)
+			print('Boost: %g/%g' % (self.state.layer_boost_indiv, self.state.layer_boost_gamma), end=" ", file=status)
 
 			if fps > 0:
-				print >> status, '| FPS: %.01f' % fps
+				print('| FPS: %.01f' % fps, end=" ", file=status)
 
 			if self.state.extra_msg:
-				print >> status, '|', self.state.extra_msg
+				print('|', self.state.extra_msg, end=" ", file=status)
 				self.state.extra_msg = ''
 
 		strings = [FormattedString(line, defaults) for line in status.getvalue().split('\n')]
