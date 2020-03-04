@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # -*- coding: utf-8
 
 import sys
@@ -6,7 +6,7 @@ import os
 import cv2
 import numpy as np
 import time
-import StringIO
+from io import StringIO
 
 from misc import WithTimer
 from numpy_cache import FIFOLimitedArrayCache
@@ -14,10 +14,10 @@ from app_base import BaseApp
 from image_misc import norm01, norm01c, norm0255, tile_images_normalize, ensure_float01, tile_images_make_tiles, \
 	ensure_uint255_and_resize_to_fit, get_tiles_height_width, get_tiles_height_width_ratio
 from image_misc import FormattedString, cv2_typeset_text, to_255
-from caffe_proc_thread import CaffeProcThread
-from jpg_vis_loading_thread import JPGVisLoadingThread
-from caffevis_app_state import CaffeVisAppState
-from caffevis_helper import get_pretty_layer_name, read_label_file, load_sprite_image, load_square_sprite_image, \
+from .caffe_proc_thread import CaffeProcThread
+from .jpg_vis_loading_thread import JPGVisLoadingThread
+from .caffevis_app_state import CaffeVisAppState
+from .caffevis_helper import get_pretty_layer_name, read_label_file, load_sprite_image, load_square_sprite_image, \
 	check_force_backward_true
 
 
@@ -26,7 +26,7 @@ class CaffeVisApp(BaseApp):
 
 	def __init__(self, settings, key_bindings):
 		super(CaffeVisApp, self).__init__(settings, key_bindings)
-		print 'Got settings', settings
+		print('Got settings', settings)
 		self.settings = settings
 		self.bindings = key_bindings
 
@@ -48,10 +48,10 @@ class CaffeVisApp(BaseApp):
 		import caffe
 		if settings.caffevis_mode_gpu:
 			caffe.set_mode_gpu()
-			print 'CaffeVisApp mode (in main thread):     GPU'
+			print('CaffeVisApp mode (in main thread):     GPU')
 		else:
 			caffe.set_mode_cpu()
-			print 'CaffeVisApp mode (in main thread):     CPU'
+			print('CaffeVisApp mode (in main thread):     CPU')
 		self.net = caffe.Classifier(
 			settings.caffevis_deploy_prototxt,
 			settings.caffevis_network_weights,
@@ -60,7 +60,7 @@ class CaffeVisApp(BaseApp):
 			raw_scale=self._range_scale,
 		)
 
-		if isinstance(settings.caffevis_data_mean, basestring):
+		if isinstance(settings.caffevis_data_mean, str):
 			# If the mean is given as a filename, load the file
 			try:
 
@@ -68,7 +68,7 @@ class CaffeVisApp(BaseApp):
 				if file_extension == ".npy":
 					# load mean from numpy array
 					self._data_mean = np.load(settings.caffevis_data_mean)
-					print "Loaded mean from numpy file, data_mean.shape: ", self._data_mean.shape
+					print("Loaded mean from numpy file, data_mean.shape: ", self._data_mean.shape)
 
 				elif file_extension == ".binaryproto":
 
@@ -78,27 +78,28 @@ class CaffeVisApp(BaseApp):
 					blob.ParseFromString(data)
 					self._data_mean = np.array(caffe.io.blobproto_to_array(blob))
 					self._data_mean = np.squeeze(self._data_mean)
-					print "Loaded mean from binaryproto file, data_mean.shape: ", self._data_mean.shape
+					print("Loaded mean from binaryproto file, data_mean.shape: ", self._data_mean.shape)
 
 				else:
 					# unknown file extension, trying to load as numpy array
 					self._data_mean = np.load(settings.caffevis_data_mean)
-					print "Loaded mean from numpy file, data_mean.shape: ", self._data_mean.shape
-
+					print("Loaded mean from numpy file, data_mean.shape: ", self._data_mean.shape
+					      )
 			except IOError:
-				print '\n\nCound not load mean file:', settings.caffevis_data_mean
-				print 'Ensure that the values in settings.py point to a valid model weights file, network'
-				print 'definition prototxt, and mean. To fetch a default model and mean file, use:\n'
-				print '$ cd models/caffenet-yos/'
-				print '$ ./fetch.sh\n\n'
+				print('\n\nCound not load mean file:', settings.caffevis_data_mean)
+				print('Ensure that the values in settings.py point to a valid model weights file, network')
+				print('definition prototxt, and mean. To fetch a default model and mean file, use:\n')
+				print('$ cd models/caffenet-yos/')
+				print('$ ./fetch.sh\n\n')
 				raise
 			input_shape = self.net.blobs[self.net.inputs[0]].data.shape[-2:]  # e.g. 227x227
 			# Crop center region (e.g. 227x227) if mean is larger (e.g. 256x256)
 			excess_h = self._data_mean.shape[1] - input_shape[0]
 			excess_w = self._data_mean.shape[2] - input_shape[1]
 			assert excess_h >= 0 and excess_w >= 0, 'mean should be at least as large as %s' % repr(input_shape)
-			self._data_mean = self._data_mean[:, (excess_h / 2):(excess_h / 2 + input_shape[0]),
-			                  (excess_w / 2):(excess_w / 2 + input_shape[1])]
+			print(excess_h, input_shape, excess_w, type(self._data_mean))
+			self._data_mean = self._data_mean[:, (excess_h // 2):(excess_h // 2 + input_shape[0]),
+			                  (excess_w // 2):(excess_w // 2 + input_shape[1])]
 		elif settings.caffevis_data_mean is None:
 			self._data_mean = None
 		else:
@@ -134,7 +135,7 @@ class CaffeVisApp(BaseApp):
 		keyboard navigation).
 		'''
 		self.net_layer_info = {}
-		for key in self.net.blobs.keys():
+		for key in list(self.net.blobs.keys()):
 			self.net_layer_info[key] = {}
 			# Conv example: (1, 96, 55, 55)
 			# FC example: (1, 1000)
@@ -173,7 +174,7 @@ class CaffeVisApp(BaseApp):
 		return [self.proc_thread.heartbeat, self.jpgvis_thread.heartbeat]
 
 	def quit(self):
-		print 'CaffeVisApp: trying to quit'
+		print('CaffeVisApp: trying to quit')
 
 		with self.state.lock:
 			self.state.quit = True
@@ -187,24 +188,26 @@ class CaffeVisApp(BaseApp):
 				raise Exception('CaffeVisApp: Could not join proc_thread; giving up.')
 			self.proc_thread = None
 
-		print 'CaffeVisApp: quitting.'
+		print('CaffeVisApp: quitting.')
 
-	def _can_skip_all(self, panes):
-		return ('caffevis_layers' not in panes.keys())
+	@staticmethod
+	def _can_skip_all(panes):
+		return 'caffevis_layers' not in list(panes.keys())
 
 	def handle_input(self, input_image, panes):
 		if self.debug_level > 1:
-			print 'handle_input: frame number', self.handled_frames, 'is', 'None' if input_image is None else 'Available'
+			print('handle_input: frame number', self.handled_frames, 'is',
+			      'None' if input_image is None else 'Available')
 		self.handled_frames += 1
 		if self._can_skip_all(panes):
 			return
 
 		with self.state.lock:
 			if self.debug_level > 1:
-				print 'CaffeVisApp.handle_input: pushed frame'
+				print('CaffeVisApp.handle_input: pushed frame')
 			self.state.next_frame = input_image
 			if self.debug_level > 1:
-				print 'CaffeVisApp.handle_input: caffe_net_state is:', self.state.caffe_net_state
+				print('CaffeVisApp.handle_input: caffe_net_state is:', self.state.caffe_net_state)
 
 	def redraw_needed(self):
 		return self.state.redraw_needed()
@@ -212,7 +215,7 @@ class CaffeVisApp(BaseApp):
 	def draw(self, panes):
 		if self._can_skip_all(panes):
 			if self.debug_level > 1:
-				print 'CaffeVisApp.draw: skipping'
+				print('CaffeVisApp.draw: skipping')
 			return False
 
 		with self.state.lock:
@@ -224,7 +227,7 @@ class CaffeVisApp(BaseApp):
 
 		if do_draw:
 			if self.debug_level > 1:
-				print 'CaffeVisApp.draw: drawing'
+				print('CaffeVisApp.draw: drawing')
 
 			if 'caffevis_control' in panes:
 				self._draw_control_pane(panes['caffevis_control'])
@@ -323,27 +326,28 @@ class CaffeVisApp(BaseApp):
 		            'thick': self.settings.caffevis_status_thick}
 		loc = self.settings.caffevis_status_loc[::-1]  # Reverse to OpenCV c,r order
 
-		status = StringIO.StringIO()
+		status = StringIO()
 		fps = self.proc_thread.approx_fps()
 		with self.state.lock:
-			print >> status, 'pattern' if self.state.pattern_mode else (
-				'back' if self.state.layers_show_back else 'fwd'),
-			print >> status, '%s:%d |' % (self.state.layer, self.state.selected_unit),
+			print('pattern' if self.state.pattern_mode else ('back' if self.state.layers_show_back else 'fwd'), end=' ',
+			      file=status)
+			print('%s:%d |' % (self.state.layer, self.state.selected_unit), end=' ', file=status)
 			if not self.state.back_enabled:
-				print >> status, 'Back: off',
+				print("Back: off", end=" ", file=status)
 			else:
-				print >> status, 'Back: %s' % ('deconv' if self.state.back_mode == 'deconv' else 'bprop'),
-				print >> status, '(from %s_%d, disp %s)' % (self.state.backprop_layer,
-				                                            self.state.backprop_unit,
-				                                            self.state.back_filt_mode),
-			print >> status, '|',
-			print >> status, 'Boost: %g/%g' % (self.state.layer_boost_indiv, self.state.layer_boost_gamma)
+				print('Back: %s' % ('deconv' if self.state.back_mode == 'deconv' else 'bprop'), end=" ", file=status)
+
+				print('(from %s_%d, disp %s)' % (
+					self.state.backprop_layer, self.state.backprop_unit, self.state.back_filt_mode), end=" ",
+				      file=status)
+			print("|", file=status)
+			print('Boost: %g/%g' % (self.state.layer_boost_indiv, self.state.layer_boost_gamma), end=" ", file=status)
 
 			if fps > 0:
-				print >> status, '| FPS: %.01f' % fps
+				print('| FPS: %.01f' % fps, end=" ", file=status)
 
 			if self.state.extra_msg:
-				print >> status, '|', self.state.extra_msg
+				print('|', self.state.extra_msg, end=" ", file=status)
 				self.state.extra_msg = ''
 
 		strings = [FormattedString(line, defaults) for line in status.getvalue().split('\n')]
@@ -585,7 +589,7 @@ class CaffeVisApp(BaseApp):
 			# Some may be missing this setting
 			self.settings.caffevis_jpgvis_layers
 		except:
-			print '\n\nNOTE: you need to upgrade your settings.py and settings_local.py files. See README.md.\n\n'
+			print('\n\nNOTE: you need to upgrade your settings.py and settings_local.py files. See README.md.\n\n')
 			raise
 
 		if self.settings.caffevis_jpgvis_remap and state_layer in self.settings.caffevis_jpgvis_remap:

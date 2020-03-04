@@ -10,15 +10,16 @@ import sys
 # Import local / overridden settings. Turn off creation of settings_local.pyc to avoid stale settings if settings_local.py is removed.
 sys.dont_write_bytecode = True
 try:
-	from settings_local import *
+    from settings_local import *
 except ImportError:
-	if not os.path.exists('settings_local.py'):
-		raise Exception(
-			'Could not import settings_local. Did you create it from the template? See README and start with:\n\n  $ cp models/caffenet-yos/settings_local.template-caffenet-yos.py settings_local.py')
-	else:
-		raise
+    if not os.path.exists('settings_local.py'):
+        raise Exception('Could not import settings_local. Did you create it from the template? See README and start with:\n\n  $ cp models/caffenet-yos/settings_local.template-caffenet-yos.py settings_local.py')
+    else:
+        raise
 # Resume usual pyc creation
 sys.dont_write_bytecode = False
+
+
 
 ####################################
 #
@@ -33,10 +34,9 @@ sys.dont_write_bytecode = False
 input_updater_capture_device = locals().get('input_updater_capture_device', 0)
 
 # How long to sleep in the input reading thread after reading a frame from the camera
-input_updater_sleep_after_read_frame = locals().get('input_updater_sleep_after_read_frame', 1.0 / 20)
+input_updater_sleep_after_read_frame = locals().get('input_updater_sleep_after_read_frame', 1.0/20)
 
-# Input updater thread die after this many seconds without a heartbeat.
-# Useful during debugging to avoid other threads running after main thread has crashed.
+# Input updater thread die after this many seconds without a heartbeat. Useful during debugging to avoid other threads running after main thread has crashed.
 input_updater_heartbeat_required = locals().get('input_updater_heartbeat_required', 15.0)
 
 # How long to sleep while waiting for key presses and redraws. Recommendation: 1 (min: 1)
@@ -45,60 +45,63 @@ main_loop_sleep_ms = locals().get('main_loop_sleep_ms', 1)
 # Whether or not to print a "." every second time through the main loop to visualize the loop rate
 print_dots = locals().get('print_dots', False)
 
+
+
 ####################################
 #
 #  Window pane layout and colors/fonts
 #
 ####################################
 
-# Show border for each panel and annotate each with its name.
-# Useful for debugging window_panes arrangement.
+# Show border for each panel and annotate each with its name. Useful
+# for debugging window_panes arrangement.
 debug_window_panes = locals().get('debug_window_panes', False)
 
-# The window panes available and their layout is determined by the "window_panes" variable.
-# By default all panes are enabled with a standard size.
-# This setting will often be overridden on a per-model basis, e.g.
-# if the model does not have pre-computed jpgvis information, the caffevis_jpgvis pane can be omitted.
-# For convenience, if the only variable that needs to be overridden is the
-# height of the control panel (to accomodate varying length of layer names), one can simply define control_pane_height.
-# If more
+# The window panes available and their layout is determined by the
+# "window_panes" variable. By default all panes are enabled with a
+# standard size. This setting will often be overridden on a per-model
+# basis, e.g. if the model does not have pre-computed jpgvis
+# information, the caffevis_jpgvis pane can be omitted. For
+# convenience, if the only variable that needs to be overridden is the
+# height of the control panel (to accomodate varying length of layer
+# names), one can simply define control_pane_height. If more
 if 'default_window_panes' in locals():
-	raise Exception('Override window panes in settings_local.py by defining window_panes, not default_window_panes')
+    raise Exception('Override window panes in settings_local.py by defining window_panes, not default_window_panes')
 default_window_panes = (
-	# (i, j, i_size, j_size)
-	('input', (0, 0, 300, 300)),  # This pane is required to show the input picture
-	('caffevis_aux', (300, 0, 300, 300)),
-	('caffevis_back', (600, 0, 300, 300)),
-	('caffevis_status', (900, 0, 30, 1500)),
-	('caffevis_control', (0, 300, 30, 900)),
-	('caffevis_layers', (30, 300, 870, 900)),
-	('caffevis_jpgvis', (0, 1200, 900, 300)),
+    # (i, j, i_size, j_size)
+    ('input',            (  0,    0,  300,   300)),    # This pane is required to show the input picture
+    ('caffevis_aux',     (300,    0,  300,   300)),
+    ('caffevis_back',    (600,    0,  300,   300)),
+    ('caffevis_status',  (900,    0,   30,  1500)),
+    ('caffevis_control', (  0,  300,   30,   900)),
+    ('caffevis_layers',  ( 30,  300,  870,   900)),
+    ('caffevis_jpgvis',  (  0, 1200,  900,   300)),
 )
 window_panes = locals().get('window_panes', default_window_panes)
 
-# Define global_scale as a float to rescale window and all panes.
-# Handy for quickly changing resolution for a different screen.
+# Define global_scale as a float to rescale window and all
+# panes. Handy for quickly changing resolution for a different screen.
 global_scale = locals().get('global_scale', 1.0)
 
 # Define global_font_size to scale all font sizes by this amount.
 global_font_size = locals().get('global_font_size', 1.0)
 
 if global_scale != 1.0:
-	scaled_window_panes = []
-	for wp in window_panes:
-		scaled_window_panes.append([wp[0], [int(val * global_scale) for val in wp[1]]])
-	window_panes = scaled_window_panes
+    scaled_window_panes = []
+    for wp in window_panes:
+        scaled_window_panes.append([wp[0], [int(val*global_scale) for val in wp[1]]])
+    window_panes = scaled_window_panes
 
 # All window configuation information is now contained in the
 # window_panes variable. Print if desired:
 if debug_window_panes:
-	print 'Final window panes and locations/sizes (i, j, i_size, j_size):'
-	for pane in window_panes:
-		print '  Pane: %s' % repr(pane)
+    print ('Final window panes and locations/sizes (i, j, i_size, j_size):')
+    for pane in window_panes:
+        print ('  Pane: %s' % repr(pane))
 
-help_pane_loc = locals().get('help_pane_loc', (.07, .07, .86, .86))  # as a fraction of main window
+help_pane_loc = locals().get('help_pane_loc', (.07, .07, .86, .86))    # as a fraction of main window
 window_background = locals().get('window_background', (.2, .2, .2))
-stale_background = locals().get('stale_background', (.3, .3, .2))
+stale_background = locals().get('stale_background',  (.3, .3, .2))
 static_files_dir = locals().get('static_files_dir', 'input_images')
 static_files_regexp = locals().get('static_files_regexp', '.*\.(jpg|jpeg|png)$')
 static_files_ignore_case = locals().get('static_files_ignore_case', True)
@@ -136,7 +139,7 @@ redraw_at_least_every = locals().get('redraw_at_least_every', 3)
 # instantiate for each app to be run. Apps are run and given keys to
 # handle in the order specified.
 default_installed_apps = (
-	('caffevis.app', 'CaffeVisApp'),
+    ('caffevis.app', 'CaffeVisApp'),
 )
 installed_apps = locals().get('installed_apps', default_installed_apps)
 
@@ -144,11 +147,13 @@ installed_apps = locals().get('installed_apps', default_installed_apps)
 # http://docs.opencv.org/2.4/modules/core/doc/drawing_functions.html#puttext
 # for information on parameters.
 help_face = locals().get('help_face', 'FONT_HERSHEY_COMPLEX_SMALL')
-help_loc = locals().get('help_loc', (20, 10))  # r,c order
-help_line_spacing = locals().get('help_line_spacing', 10)  # extra pixel spacing between lines
-help_clr = locals().get('help_clr', (1, 1, 1))
+help_loc = locals().get('help_loc', (20,10))   # r,c order
+help_line_spacing = locals().get('help_line_spacing', 10)     # extra pixel spacing between lines
+help_clr   = locals().get('help_clr', (1,1,1))
 help_fsize = locals().get('help_fsize', 1.0 * global_font_size)
 help_thick = locals().get('help_thick', 1)
+
+
 
 ####################################
 #
@@ -173,10 +178,12 @@ caffevis_labels = locals().get('caffevis_labels', None)
 # (when those neurons are selected). None to disable.
 caffevis_label_layers = locals().get('caffevis_label_layers', None)
 
-# Which layer to use for displaying class output numbers in left pane (when no neurons are selected). None to disable.
+# Which layer to use for displaying class output numbers in left pane
+# (when no neurons are selected). None to disable.
 caffevis_prob_layer = locals().get('caffevis_prob_layer', None)
 
-# String or None. Which directory to load pre-computed per-unit visualizations from, if any. None to disable.
+# String or None. Which directory to load pre-computed per-unit
+# visualizations from, if any. None to disable.
 caffevis_unit_jpg_dir = locals().get('caffevis_unit_jpg_dir', None)
 
 # List. For which layers should jpgs be loaded for
@@ -205,20 +212,17 @@ caffevis_layers_aspect_ratio = locals().get('caffevis_layers_aspect_ratio', 1.0)
 # directory (the location of this settings file)
 dvt_root = os.path.dirname(os.path.abspath(__file__))
 if 'caffevis_deploy_prototxt' in locals():
-	caffevis_deploy_prototxt = caffevis_deploy_prototxt.replace('%DVT_ROOT%', dvt_root)
+    caffevis_deploy_prototxt = caffevis_deploy_prototxt.replace('%DVT_ROOT%', dvt_root)
 if 'caffevis_network_weights' in locals():
-	caffevis_network_weights = caffevis_network_weights.replace('%DVT_ROOT%', dvt_root)
-if isinstance(caffevis_data_mean, basestring):
-	caffevis_data_mean = caffevis_data_mean.replace('%DVT_ROOT%', dvt_root)
-if isinstance(caffevis_labels, basestring):
-	caffevis_labels = caffevis_labels.replace('%DVT_ROOT%', dvt_root)
-if isinstance(caffevis_unit_jpg_dir, basestring):
-	caffevis_unit_jpg_dir = caffevis_unit_jpg_dir.replace('%DVT_ROOT%', dvt_root)
+    caffevis_network_weights = caffevis_network_weights.replace('%DVT_ROOT%', dvt_root)
+if isinstance(caffevis_data_mean, str):
+    caffevis_data_mean = caffevis_data_mean.replace('%DVT_ROOT%', dvt_root)
+if isinstance(caffevis_labels, str):
+    caffevis_labels = caffevis_labels.replace('%DVT_ROOT%', dvt_root)
+if isinstance(caffevis_unit_jpg_dir, str):
+    caffevis_unit_jpg_dir = caffevis_unit_jpg_dir.replace('%DVT_ROOT%', dvt_root)
 
-# Pause Caffe forward/backward computation for this many seconds after a keypress.
-# This is to keep the processor free for a brief period after a keypress,
-# which allow the interface to feel much more responsive.
-# After this period has passed, Caffe resumes computation, in CPU mode often occupying all cores. Default: .1
+# Pause Caffe forward/backward computation for this many seconds after a keypress. This is to keep the processor free for a brief period after a keypress, which allow the interface to feel much more responsive. After this period has passed, Caffe resumes computation, in CPU mode often occupying all cores. Default: .1
 caffevis_pause_after_keys = locals().get('caffevis_pause_after_keys', .10)
 caffevis_frame_wait_sleep = locals().get('caffevis_frame_wait_sleep', .01)
 caffevis_jpg_load_sleep = locals().get('caffevis_jpg_load_sleep', .01)
@@ -232,7 +236,7 @@ caffevis_fast_move_dist = locals().get('caffevis_fast_move_dist', 3)
 # Size of jpg reading cache in bytes (default: 2GB)
 # Note: largest fc6/fc7 images are ~600MB. Cache smaller than this will be painfully slow when using patterns_mode for fc6 and fc7.
 # Cache use when all layers have been loaded is ~1.6GB
-caffevis_jpg_cache_size = locals().get('caffevis_jpg_cache_size', 2000 * 1024 ** 2)
+caffevis_jpg_cache_size  = locals().get('caffevis_jpg_cache_size', 2000*1024**2)
 
 caffevis_grad_norm_blur_radius = locals().get('caffevis_grad_norm_blur_radius', 4.0)
 
@@ -249,7 +253,7 @@ caffevis_boost_indiv_default_idx = locals().get('caffevis_boost_indiv_default_id
 # 1.0)
 caffevis_boost_gamma_choices = locals().get('caffevis_boost_gamma_choices', (1, .7, .5, .3))
 # Default boost gamma given as index into caffevis_boost_gamma_choices
-caffevis_boost_gamma_default_idx = locals().get('caffaevis_boost_gamma_default_idx', 0)
+caffevis_boost_gamma_default_idx = locals().get('caffevis_boost_gamma_default_idx', 0)
 # Initially show label predictions or not (toggle with default key '8')
 caffevis_init_show_label_predictions = locals().get('caffevis_init_show_label_predictions', True)
 # Initially show jpg vis or not (toggle with default key '9')
@@ -259,10 +263,10 @@ caffevis_init_show_unit_jpgs = locals().get('caffevis_init_show_unit_jpgs', True
 caffevis_control_line_spacing = locals().get('caffevis_control_line_spacing', 4)
 # Font settings for control pane (list of layers)
 caffevis_control_face = locals().get('caffevis_control_face', 'FONT_HERSHEY_COMPLEX_SMALL')
-caffevis_control_loc = locals().get('caffevis_control_loc', (15, 5))  # r,c order
-caffevis_control_clr = locals().get('caffevis_control_clr', (.8, .8, .8))
+caffevis_control_loc = locals().get('caffevis_control_loc', (15,5))   # r,c order
+caffevis_control_clr = locals().get('caffevis_control_clr', (.8,.8,.8))
 caffevis_control_clr_selected = locals().get('caffevis_control_clr_selected', (1, 1, 1))
-caffevis_control_clr_cursor = locals().get('caffevis_control_clr_cursor', (.5, 1, .5))
+caffevis_control_clr_cursor = locals().get('caffevis_control_clr_cursor', (.5,1,.5))
 caffevis_control_clr_bp = locals().get('caffevis_control_clr_bp', (.8, .8, 1))
 caffevis_control_fsize = locals().get('caffevis_control_fsize', 1.0 * global_font_size)
 caffevis_control_thick = locals().get('caffevis_control_thick', 1)
@@ -271,37 +275,38 @@ caffevis_control_thick_cursor = locals().get('caffevis_control_thick_cursor', 2)
 caffevis_control_thick_bp = locals().get('caffevis_control_thick_bp', 2)
 
 # Color settings for layer activation pane
-caffevis_layer_clr_cursor = locals().get('caffevis_layer_clr_cursor', (.5, 1, .5))
-caffevis_layer_clr_back_background = locals().get('caffevis_layer_clr_back_background', (.2, .2, .5))
-caffevis_layer_clr_back_sel = locals().get('caffevis_layer_clr_back_sel', (.2, .2, 1))
+caffevis_layer_clr_cursor   = locals().get('caffevis_layer_clr_cursor', (.5,1,.5))
+caffevis_layer_clr_back_background = locals().get('caffevis_layer_clr_back_background', (.2,.2,.5))
+caffevis_layer_clr_back_sel = locals().get('caffevis_layer_clr_back_sel', (.2,.2,1))
 
 # Font settings for status pane (bottom line)
 caffevis_status_face = locals().get('caffevis_status_face', 'FONT_HERSHEY_COMPLEX_SMALL')
-caffevis_status_loc = locals().get('caffevis_status_loc', (15, 10))  # r,c order
-caffevis_status_line_spacing = locals().get('caffevis_status_line_spacing', 5)  # extra pixel spacing between lines
-caffevis_status_clr = locals().get('caffevis_status_clr', (.8, .8, .8))
+caffevis_status_loc = locals().get('caffevis_status_loc', (15,10))   # r,c order
+caffevis_status_line_spacing = locals().get('caffevis_status_line_spacing', 5)     # extra pixel spacing between lines
+caffevis_status_clr = locals().get('caffevis_status_clr', (.8,.8,.8))
 caffevis_status_fsize = locals().get('caffevis_status_fsize', 1.0 * global_font_size)
 caffevis_status_thick = locals().get('caffevis_status_thick', 1)
 caffevis_jpgvis_stack_vert = locals().get('caffevis_jpgvis_stack_vert', True)
 
 # Font settings for class prob output (top 5 classes listed on left)
 caffevis_class_face = locals().get('caffevis_class_face', 'FONT_HERSHEY_COMPLEX_SMALL')
-caffevis_class_loc = locals().get('caffevis_class_loc', (20, 10))  # r,c order
-caffevis_class_line_spacing = locals().get('caffevis_class_line_spacing', 10)  # extra pixel spacing between lines
-caffevis_class_clr_0 = locals().get('caffevis_class_clr_0', (.5, .5, .5))
-caffevis_class_clr_1 = locals().get('caffevis_class_clr_1', (.5, 1, .5))
+caffevis_class_loc = locals().get('caffevis_class_loc', (20,10))   # r,c order
+caffevis_class_line_spacing = locals().get('caffevis_class_line_spacing', 10)     # extra pixel spacing between lines
+caffevis_class_clr_0 = locals().get('caffevis_class_clr_0', (.5,.5,.5))
+caffevis_class_clr_1 = locals().get('caffevis_class_clr_1', (.5,1,.5))
 caffevis_class_fsize = locals().get('caffevis_class_fsize', 1.0 * global_font_size)
 caffevis_class_thick = locals().get('caffevis_class_thick', 1)
 
 # Font settings for label overlay text (shown on layer pane only for caffevis_label_layers layers)
 caffevis_label_face = locals().get('caffevis_label_face', 'FONT_HERSHEY_COMPLEX_SMALL')
-caffevis_label_loc = locals().get('caffevis_label_loc', (30, 20))  # r,c order
-caffevis_label_clr = locals().get('caffevis_label_clr', (.8, .8, .8))
+caffevis_label_loc = locals().get('caffevis_label_loc', (30,20))   # r,c order
+caffevis_label_clr = locals().get('caffevis_label_clr', (.8,.8,.8))
 caffevis_label_fsize = locals().get('caffevis_label_fsize', 1.0 * global_font_size)
 caffevis_label_thick = locals().get('caffevis_label_thick', 1)
 
 # caffe net parameter - channel swap
-caffe_net_channel_swap = locals().get('caffe_net_channel_swap', (2, 1, 0))
+caffe_net_channel_swap = locals().get('caffe_net_channel_swap', (2,1,0))
+
 
 ####################################
 #
@@ -311,12 +316,9 @@ caffe_net_channel_swap = locals().get('caffe_net_channel_swap', (2, 1, 0))
 
 # Check that required setting have been defined
 bound_locals = locals()
-
-
 def assert_in_settings(setting_name):
-	if not setting_name in bound_locals:
-		raise Exception('The "%s" setting is required; be sure to define it in settings_local.py' % setting_name)
-
+    if not setting_name in bound_locals:
+        raise Exception('The "%s" setting is required; be sure to define it in settings_local.py' % setting_name)
 
 assert_in_settings('caffevis_caffe_root')
 assert_in_settings('caffevis_deploy_prototxt')
@@ -325,5 +327,4 @@ assert_in_settings('caffevis_data_mean')
 
 # Check that caffe directory actually exists
 if not os.path.exists(caffevis_caffe_root):
-	raise Exception(
-		'The Caffe directory specified in settings_local.py, %s, does not exist. Set the caffevis_caffe_root variable in your settings_local.py to the path of your compiled Caffe checkout.' % caffevis_caffe_root)
+    raise Exception('The Caffe directory specified in settings_local.py, %s, does not exist. Set the caffevis_caffe_root variable in your settings_local.py to the path of your compiled Caffe checkout.' % caffevis_caffe_root)

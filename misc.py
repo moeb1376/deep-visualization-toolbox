@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import os
 import time
@@ -15,7 +15,7 @@ class WithTimer:
 		return time.time() - self.wall, time.clock() - self.proc
 
 	def enter(self):
-		# Manually trigger enter
+		'''Manually trigger enter'''
 		self.__enter__()
 
 	def __enter__(self):
@@ -25,8 +25,9 @@ class WithTimer:
 
 	def __exit__(self, *args):
 		if not self.quiet:
-			title_str = (' ' + self.title) if self.title else ''
-			print 'Elapsed%s: wall: %.06f, sys: %.06f' % ((title_str,) + self.elapsed())
+			titlestr = (' ' + self.title) if self.title else ''
+			print('Elapsed%s: wall: %.06f, sys: %.06f' % ((titlestr,) + self.elapsed())
+			      )
 
 
 def mkdir_p(path):
@@ -41,10 +42,10 @@ def mkdir_p(path):
 
 
 def combine_dicts(dicts_tuple):
-	# Combines multiple dictionaries into one by adding a prefix to keys
+	'''Combines multiple dictionaries into one by adding a prefix to keys'''
 	ret = {}
 	for prefix, dictionary in dicts_tuple:
-		for key in dictionary.keys():
+		for key in list(dictionary.keys()):
 			ret['%s%s' % (prefix, key)] = dictionary[key]
 	return ret
 
@@ -55,6 +56,6 @@ def tsplit(string, no_empty_strings, *delimiters):
 	pattern = '|'.join(map(re.escape, delimiters))
 	strings = re.split(pattern, string)
 	if no_empty_strings:
-		strings = filter(None, strings)
+		string = [_f for _f in string if _f]
 
 	return strings
