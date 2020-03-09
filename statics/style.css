@@ -34,3 +34,7 @@ li.indicator{
 .tabs .tab a{
     color:#00838f !important;
 }
+.responsive-canvas{
+    max-width: 100%;
+    height: auto;
+}

@@ -97,16 +97,11 @@ class CaffeVisAppState(object):
 				self.move_selection('up', self.settings.caffevis_fast_move_dist)
 
 			elif tag == 'boost_individual':
-				self.layer_boost_indiv_idx = (self.layer_boost_indiv_idx + 1) % len(self.layer_boost_indiv_choices)
-				self.layer_boost_indiv = self.layer_boost_indiv_choices[self.layer_boost_indiv_idx]
+				self.change_boost_individual()
 			elif tag == 'boost_gamma':
-				self.layer_boost_gamma_idx = (self.layer_boost_gamma_idx + 1) % len(self.layer_boost_gamma_choices)
-				self.layer_boost_gamma = self.layer_boost_gamma_choices[self.layer_boost_gamma_idx]
+				self.change_boost_gamma()
 			elif tag == 'pattern_mode':
-				self.pattern_mode = not self.pattern_mode
-				if self.pattern_mode and not hasattr(self.settings, 'caffevis_unit_jpg_dir'):
-					print('Cannot switch to pattern mode; caffevis_unit_jpg_dir not defined in settings.py.')
-					self.pattern_mode = False
+				self.toggle_patter_mode()
 			elif tag == 'show_back':
 				# If in pattern mode: switch to fwd/back. Else toggle fwd/back mode
 				if self.pattern_mode:
@@ -212,6 +207,20 @@ class CaffeVisAppState(object):
 					self.selected_unit += self.net_layer_info[self.layer]['tile_cols']
 					self.cursor_area = 'top'
 
+	def change_boost_individual(self):
+		self.layer_boost_indiv_idx = (self.layer_boost_indiv_idx + 1) % len(self.layer_boost_indiv_choices)
+		self.layer_boost_indiv = self.layer_boost_indiv_choices[self.layer_boost_indiv_idx]
+
+	def change_boost_gamma(self):
+		self.layer_boost_gamma_idx = (self.layer_boost_gamma_idx + 1) % len(self.layer_boost_gamma_choices)
+		self.layer_boost_gamma = self.layer_boost_gamma_choices[self.layer_boost_gamma_idx]
+
+	def toggle_patter_mode(self):
+		self.pattern_mode = not self.pattern_mode
+		if self.pattern_mode and not hasattr(self.settings, 'caffevis_unit_jpg_dir'):
+			print('Cannot switch to pattern mode; caffevis_unit_jpg_dir not defined in settings.py.')
+			self.pattern_mode = False
+
 	def _ensure_valid_selected(self):
 		n_tiles = self.net_layer_info[self.layer]['n_tiles']
 
@@ -226,3 +235,5 @@ class CaffeVisAppState(object):
 				self.backprop_layer = self.layer
 				self.backprop_unit = self.selected_unit
 				self.back_stale = True  # If there is any change, back diffs are now stale
+
+

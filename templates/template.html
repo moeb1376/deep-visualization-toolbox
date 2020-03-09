@@ -3,20 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Deep Visualization Toolbox</title>
+    {% load static %}
 
     <!--Import Google Icon Font-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
           media="screen,projection">
-    <link type="text/css" rel="stylesheet" href="style.css" media="screen,projection">
+    <link type="text/css" rel="stylesheet" href='{% static "style.css" %}' media="screen,projection">
 
     <!--Let browser know website is optimized for mobile-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
+
 </head>
 <body>
 <!-- Setting Section -->
+<script>console.log({{ layer_info }})</script>
 <div class="row">
     <ul id="slide-out" class="sidenav col s2">
         <li><a href="#!"><i class="material-icons">ac_unit</i>Freeze camera image</a></li>
@@ -42,7 +45,9 @@
 <!-- # -->
 <div class="row">
     <div class="col s3  ">
-        <div class="center-align"><img src="../input_images/ILSVRC2012_val_00029739.jpg" class="responsive-img"></div>
+        <div class="center-align" id="input_frame">
+            <canvas id="input_canvas" class="responsive-canvas">asda</canvas>
+        </div>
         <div>
             <ul class="collapsible expandable">
                 <li>
@@ -61,7 +66,8 @@
                     <div class="collapsible-header"><i class="material-icons">filter_none</i>Selected channel</div>
                     <div class="collapsible-body">
                         <span>
-                            <img class="responsive-img" src="img/Screenshot%20from%202020-02-28%2015-19-27.png">
+                            <img class="responsive-img"
+                                 src="../statics/img/Screenshot%20from%202020-02-28%2015-19-27.png">
                         </span>
                     </div>
                 </li>
@@ -71,7 +77,8 @@
                     </div>
                     <div class="collapsible-body">
                         <span>
-                            <img class="responsive-img" src="img/Screenshot%20from%202020-02-28%2015-19-47.png">
+                            <img class="responsive-img"
+                                 src="../statics/img/Screenshot%20from%202020-02-28%2015-19-47.png">
                         </span>
                     </div>
                 </li>
@@ -80,45 +87,41 @@
     </div>
     <div class="col s6">
         <ul class="tabs">
-            <li class="tab "><a class="active cyan-text text-darken-3" href="#test1">conv1</a></li>
-            <li class="tab"><a href="#test2">pool1</a></li>
-            <li class="tab"><a href="#test3">norm1</a></li>
-            <li class="tab"><a href="#test4">conv2</a></li>
-            <li class="tab"><a class="active" href="#test1">pool2</a></li>
-            <li class="tab"><a href="#test2">norm2</a></li>
-            <li class="tab"><a href="#test3">conv3</a></li>
-            <li class="tab"><a href="#test4">conv4</a></li>
-            <li class="tab"><a class="active" href="#test1">conv5</a></li>
-            <li class="tab"><a href="#test2">pool5</a></li>
-            <li class="tab"><a href="#test3">fc6</a></li>
-            <li class="tab"><a href="#test4">fc7</a></li>
-            <li class="tab"><a class="active" href="#test1">fc8</a></li>
-            <li class="tab"><a href="#test2">prob</a></li>
+            {% for tab in layer_info %}
+                {% if forloop.counter == 1 %}
+                    <li class="tab"><a class="active" href="#{{ tab }}">{{ tab }}</a></li>
+                {% else %}
+                    <li class="tab"><a href="#{{ tab }}">{{ tab }}</a></li>
+                {% endif %}
+            {% endfor %}
         </ul>
-        <div id="test1" class="col s12">
-            <img class="responsive-img" src="img/Screenshot%20from%202020-02-28%2015-20-01.png">
-        </div>
-        <div id="test2" class="col s12">Test 2</div>
-        <div id="test3" class="col s12">Test 3</div>
-        <div id="test4" class="col s12">Test 4</div>
+        {% for tab in layer_info %}
+            <div id="{{ tab }}" class="col s12">
+                {{ tab }}
+            </div>
+        {% endfor %}
     </div>
     <div class="col s3">
         <div class="center-align">
-            <h5 >Gradient ascent</h5>
-            <img src="img/Screenshot%20from%202020-02-28%2015-20-15.png" class="responsive-img">
+            <h5>Gradient ascent</h5>
+            <img src="../statics/img/Screenshot%20from%202020-02-28%2015-20-15.png" class="responsive-img">
         </div>
         <div class="center-align">
-            <h5 >Top 9 image</h5>
-            <img src="img/Screenshot%20from%202020-02-28%2015-20-26.png" class="responsive-img">
+            <h5>Top 9 image</h5>
+            <img src="../statics/img/Screenshot%20from%202020-02-28%2015-20-26.png" class="responsive-img">
         </div>
         <div class="center-align">
-            <h5 >Deconv of top 9</h5>
-            <img src="img/Screenshot%20from%202020-02-28%2015-20-36.png" class="responsive-img">
+            <h5>Deconv of top 9</h5>
+            <img src="../statics/img/Screenshot%20from%202020-02-28%2015-20-36.png" class="responsive-img">
         </div>
     </div>
 </div>
 <!-- Compiled and minified JavaScript -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script
+        src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+        crossorigin="anonymous"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         let collapsible_elems = document.querySelectorAll('.collapsible');
@@ -131,6 +134,33 @@
         let tabs_options = {}
         let tabs_instances = M.Tabs.init(tabs_elems, tabs_options)
     });
+    let update_input_frame = $.ajax({url: "{% url "caffevis_API:update_input_frame" %}", method: "GET"});
+    update_input_frame.done(result => {
+        let shape = result.shape;
+        let data = result.image_data;
+        console.log(result);
+        {#let input_frame = $("#input_frame");#}
+        let input_canvas = document.getElementById("input_canvas");
+        input_canvas.width = shape[1];
+        input_canvas.height = shape[0];
+        let ctx = input_canvas.getContext("2d");
+        let imageData = ctx.createImageData(shape[0], shape[1]);
+        console.log(data)
+        for (let i = 0; i < shape[1]; i++) {
+            for (let j = 0; j < shape[0]; j++) {
+                let index = (j + i * shape[1]) * 4;
+                imageData.data[index + 0] = data[i][j][0];
+                imageData.data[index + 1] = data[i][j][1];
+                imageData.data[index + 2] = data[i][j][2];
+                imageData.data[index + 3] = 255;
+            }
+        }
+        console.log(ctx)
+        console.log(imageData)
+        console.log(input_canvas)
+        ctx.putImageData(imageData, 0, 0);
+
+    })
 </script>
 </body>
 </html>

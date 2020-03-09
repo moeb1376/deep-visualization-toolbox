@@ -13,7 +13,7 @@ from numpy_cache import FIFOLimitedArrayCache
 from app_base import BaseApp
 from image_misc import norm01, norm01c, norm0255, tile_images_normalize, ensure_float01, tile_images_make_tiles, \
 	ensure_uint255_and_resize_to_fit, get_tiles_height_width, get_tiles_height_width_ratio
-from image_misc import FormattedString, cv2_typeset_text, to_255
+from image_misc import FormattedString, cv2_typeset_text, to_255, ensure_uint255
 from .caffe_proc_thread import CaffeProcThread
 from .jpg_vis_loading_thread import JPGVisLoadingThread
 from .caffevis_app_state import CaffeVisAppState
@@ -195,7 +195,7 @@ class CaffeVisApp(BaseApp):
 		return 'caffevis_layers' not in list(panes.keys())
 
 	def handle_input(self, input_image, panes):
-		if self.debug_level > 1:
+		if self.debug_level >= 1:
 			print('handle_input: frame number', self.handled_frames, 'is',
 			      'None' if input_image is None else 'Available')
 		self.handled_frames += 1
@@ -236,14 +236,15 @@ class CaffeVisApp(BaseApp):
 			layer_data_3D_highres = None
 			if 'caffevis_layers' in panes:
 				layer_data_3D_highres = self._draw_layer_pane(panes['caffevis_layers'])
+				layer_data_3D_uint8 = ensure_uint255(layer_data_3D_highres)
 			if 'caffevis_aux' in panes:
 				self._draw_aux_pane(panes['caffevis_aux'], layer_data_3D_highres)
 			if 'caffevis_back' in panes:
 				# Draw back pane as normal
-				self._draw_back_pane(panes['caffevis_back'])
+				back_draw_image = self._draw_back_pane(panes['caffevis_back'])
 				if self.state.layers_pane_zoom_mode == 2:
 					# ALSO draw back pane into layers pane
-					self._draw_back_pane(panes['caffevis_layers'])
+					back_draw_image = self._draw_back_pane(panes['caffevis_layers'])
 			if 'caffevis_jpgvis' in panes:
 				self._draw_jpgvis_pane(panes['caffevis_jpgvis'])
 
@@ -578,12 +579,16 @@ class CaffeVisApp(BaseApp):
 
 			grad_img_resize = ensure_uint255_and_resize_to_fit(grad_img_disp, pane.data.shape)
 			pane.data[0:grad_img_resize.shape[0], 0:grad_img_resize.shape[1], :] = grad_img_resize
+			return grad_img_disp
 
 	def _draw_jpgvis_pane(self, pane):
 		pane.data[:] = to_255(self.settings.window_background)
 
 		with self.state.lock:
-			state_layer, state_selected_unit, cursor_area, show_unit_jpgs = self.state.layer, self.state.selected_unit, self.state.cursor_area, self.state.show_unit_jpgs
+			state_layer = self.state.layer
+			state_selected_unit = self.state.selected_unit
+			cursor_area = self.state.cursor_area
+			show_unit_jpgs = self.state.show_unit_jpgs
 
 		try:
 			# Some may be missing this setting

@@ -119,7 +119,7 @@ _.add('back_filt_mode', 'm',
 
 _.add('boost_gamma', 't',
       'Boost contrast using gamma correction')
-_.add('boost_individual', 'T',
+_.add('boost_individual', 'y',
       'Boost contrast by scaling each channel to use more of its individual range')
 _.add('toggle_label_predictions', '8',
       'Turn on or off display of prob label values')

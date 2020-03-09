@@ -217,7 +217,7 @@ def tile_images_make_tiles(data, padsize=1, padval=0, hw=None, highlights=None):
 	if highlights is not None:
 		assert len(highlights) == data.shape[0]
 	padding = ((0, width * height - data.shape[0]), (padsize, padsize), (padsize, padsize)) + ((0, 0),) * (
-				data.ndim - 3)
+			data.ndim - 3)
 
 	# First pad with constant vals
 	try:
@@ -272,8 +272,7 @@ def to_255(vals_01):
 		return vals_01 * 255
 
 
-def ensure_uint255_and_resize_to_fit(img, out_max_shape,
-                                     shrink_interpolation=cv2.INTER_LINEAR,
+def ensure_uint255_and_resize_to_fit(img, out_max_shape, shrink_interpolation=cv2.INTER_LINEAR,
                                      grow_interpolation=cv2.INTER_NEAREST):
 	as_uint255 = ensure_uint255(img)
 	return resize_to_fit(as_uint255, out_max_shape,
@@ -292,7 +291,7 @@ def ensure_uint255(arr):
 		return np.array(arr * 255, dtype='uint8')
 	else:
 		raise Exception('ensure_uint255 expects uint8 or float input but got %s with range [%g,%g,].' % (
-		arr.dtype, arr.min(), arr.max()))
+			arr.dtype, arr.min(), arr.max()))
 
 
 def ensure_float01(arr, dtype_preference='float32'):
@@ -305,12 +304,10 @@ def ensure_float01(arr, dtype_preference='float32'):
 		return arr
 	else:
 		raise Exception('ensure_float01 expects uint8 or float input but got %s with range [%g,%g,].' % (
-		arr.dtype, arr.min(), arr.max()))
+			arr.dtype, arr.min(), arr.max()))
 
 
-def resize_to_fit(img, out_max_shape,
-                  dtype_out=None,
-                  shrink_interpolation=cv2.INTER_LINEAR,
+def resize_to_fit(img, out_max_shape, dtype_out=None, shrink_interpolation=cv2.INTER_LINEAR,
                   grow_interpolation=cv2.INTER_NEAREST):
 	'''Resizes to fit within out_max_shape. If ratio is different,
 	returns an image that fits but is smaller along one of the two
