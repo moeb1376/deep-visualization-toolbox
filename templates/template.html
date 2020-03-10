@@ -139,9 +139,9 @@
 
         // caffevis init
         let get_input_frame = $.ajax({url: "{% url "caffevis_API:input_frame" %}", method: "GET"});
-        get_input_frame.done(update_input_frame);
+        get_input_frame.done(updateInputFrame);
         let get_layer_data = $.ajax({url: "{% url "caffevis_API:layer_data" %}", method: "GET"});
-        get_layer_data.done(update_layer_data);
+        get_layer_data.done(updateLayerData);
     });
 
 

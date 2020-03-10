@@ -88,11 +88,9 @@ def update_back_pane(request):
 	number = request.POST.get("number", None)
 	if number is None:
 		return HttpResponseBadRequest()
-	app.state.selected_unit = int(number)
+	app.state.change_selected_unit_and_back_enable_webapp(int(number))
 	app.state.cursor_area = "bottom"
-	app.state.back_enabled = True
 	app.state.drawing_stale = True
-	app.state.back_stale = True
 	while not app.new_data_available.get("back_draw_image", False):
 		continue
 	print("after while in back pane")

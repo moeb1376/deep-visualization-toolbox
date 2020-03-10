@@ -250,7 +250,7 @@ class CaffeVisApp(BaseApp):
 				if back_draw_image is not None:
 					print("back draw is down")
 					self.new_data_available["back_draw_image"] = True
-					self.data_webapp["back_draw_image"] = back_draw_image
+					self.data_webapp["back_draw_image"] = ensure_uint255(back_draw_image)
 				if self.state.layers_pane_zoom_mode == 2:
 					# ALSO draw back pane into layers pane
 					back_draw_image = self._draw_back_pane(panes['caffevis_layers'])

@@ -236,4 +236,8 @@ class CaffeVisAppState(object):
 				self.backprop_unit = self.selected_unit
 				self.back_stale = True  # If there is any change, back diffs are now stale
 
-
+	def change_selected_unit_and_back_enable_webapp(self, number):
+		self.selected_unit = number
+		self.back_enabled = True
+		self.back_stale = True
+		self._ensure_valid_selected()

@@ -1,11 +1,12 @@
-function update_input_frame(result) {
+
+function updateInputFrame(result) {
     let shape = result.shape;
     let data = result.image_data;
     console.log(result);
-    let input_canvas = document.getElementById("input_canvas");
-    input_canvas.width = shape[1];
-    input_canvas.height = shape[0];
-    let ctx = input_canvas.getContext("2d");
+    let inputCanvas = document.getElementById("input_canvas");
+    inputCanvas.width = shape[1];
+    inputCanvas.height = shape[0];
+    let ctx = inputCanvas.getContext("2d");
     let imageData = ctx.createImageData(shape[0], shape[1]);
     for (let i = 0; i < shape[1]; i++) {
         for (let j = 0; j < shape[0]; j++) {
@@ -19,7 +20,7 @@ function update_input_frame(result) {
     ctx.putImageData(imageData, 0, 0);
 }
 
-function update_layer_data(result) {
+function updateLayerData(result) {
     let shape = result.shape;
     let data = result.data;
     let layer = result.selected_layer;
@@ -46,26 +47,27 @@ function update_layer_data(result) {
         $("#" + layer).append(layerCanvas);
         // $("#" + layer).append(layerCanvas);
     }
-    let last_active = "";
+    let lastActive = "";
     $(".layer_canvas").click((event) => {
-        if (last_active != "") {
-            last_active.classList.remove("active");
+        if (lastActive != "") {
+            lastActive.classList.remove("active");
         }
         event.target.classList.add("active");
-        last_active = event.target;
+        lastActive = event.target;
         let name = event.target.getAttribute("name");
         let number = parseInt(name.split(":")[1], 10);
-        update_selected_channel_img(data[number], [shape[1], shape[2]]);
-        update_jpgvis(event.target.getAttribute("name"));
-        update_back_pane(number)
+        updateSelectedChannelImg(data[number], [shape[1], shape[2]]);
+        // updateJpgvis(event.target.getAttribute("name"));
+        listOfFunction.updateJpgvis(event.target.getAttribute("name"));
+        updateBackPane(number)
     })
 }
 
-function update_selected_channel_img(data, shape) {
-    let selected_channel_canvas = document.getElementById("selected_channel_canvas");
-    selected_channel_canvas.width = shape[1];
-    selected_channel_canvas.height = shape[0];
-    let ctx = selected_channel_canvas.getContext("2d");
+function updateSelectedChannelImg(data, shape) {
+    let selectedChannelCanvas = document.getElementById("selected_channel_canvas");
+    selectedChannelCanvas.width = shape[1];
+    selectedChannelCanvas.height = shape[0];
+    let ctx = selectedChannelCanvas.getContext("2d");
     let imageData = ctx.createImageData(shape[0], shape[1]);
     for (let i = 0; i < shape[1]; i++) {
         for (let j = 0; j < shape[0]; j++) {
@@ -79,7 +81,7 @@ function update_selected_channel_img(data, shape) {
     ctx.putImageData(imageData, 0, 0);
 }
 
-function update_jpgvis(name) {
+function updateJpgvis(name) {
     console.log(name.split(":"))
     let layer = name.split(":")[0];
     let number = name.split(":")[1];
@@ -89,17 +91,17 @@ function update_jpgvis(name) {
     $("#regularized").attr("src", "/media/regularized_opt/" + layer + "/" + layer + "_" + number + "_montage.jpg");
 }
 
-function update_back_pane(number) {
+function updateBackPane(number) {
     console.log("in back pane")
-    let get_back_data = $.ajax({url: "/api/back_pane/", method: "POST", data: {"number": number}});
-    get_back_data.done(result => {
+    let getBackData = $.ajax({url: "/api/back_pane/", method: "POST", data: {"number": number}});
+    getBackData.done(result => {
         let shape = result.shape;
         let data = result.data;
         console.log("back update : ",result);
-        let back_canvas = document.getElementById("back_canvas");
-        back_canvas.width = shape[1];
-        back_canvas.height = shape[0];
-        let ctx = back_canvas.getContext("2d");
+        let backCanvas = document.getElementById("back_canvas");
+        backCanvas.width = shape[1];
+        backCanvas.height = shape[0];
+        let ctx = backCanvas.getContext("2d");
         let imageData = ctx.createImageData(shape[0], shape[1]);
         for (let i = 0; i < shape[1]; i++) {
             for (let j = 0; j < shape[0]; j++) {
@@ -113,3 +115,13 @@ function update_back_pane(number) {
         ctx.putImageData(imageData, 0, 0);
     })
 }
+
+let arrowFunctionUpdateJpgvis = (name)=>{
+    let layer = name.split(":")[0];
+    let number = name.split(":")[1];
+    number = "0".repeat(4 - number.length) + number;
+    $("#max_deconv").attr("src", "/media/max_deconv/" + layer + "/" + layer + "_" + number + ".jpg");
+    $("#top_img").attr("src", "/media/max_im/" + layer + "/" + layer + "_" + number + ".jpg");
+    $("#regularized").attr("src", "/media/regularized_opt/" + layer + "/" + layer + "_" + number + "_montage.jpg");
+}
+let listOfFunction={"updateJpgvis":arrowFunctionUpdateJpgvis}
