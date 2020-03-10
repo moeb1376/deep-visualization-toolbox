@@ -1,6 +1,9 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render
 import os
+
+from django.views.decorators.csrf import csrf_exempt
+
 from live_vis import LiveVis
 
 try:
@@ -15,17 +18,27 @@ except:
 	raise
 
 lv = LiveVis(settings)
+app = lv.apps["CaffeVisApp"]
 
 
 def main_page(request):
+	context = {}
 	import threading
 	live_vis_thread = threading.Thread(target=lv.run_loop)
 	live_vis_thread.setDaemon(True)
 	live_vis_thread.start()
-	while not lv.preprocess:
+	while lv.preprocess < 3:
 		continue
-	print("frame data", lv.input_updater.get_frame()[1].shape)
-	return render(request, "template.html", {"layer_info": clean_net_layer_info(lv.nets_layer_info)})
+	lv.preprocess = 0
+	if app.new_data_available["prob_label"]:
+		for data in app.data_webapp["prob_label"]:
+			data[1] = 1 if data[1] else 0
+		context["prob_label"] = app.data_webapp['prob_label']
+	if app.new_data_available["net_layer_info"]:
+		context["net_layer_info"] = clean_net_layer_info(lv.nets_layer_info)
+
+	print(context)
+	return render(request, "template.html", context)
 
 
 def clean_net_layer_info(nets_layer_info):
@@ -43,3 +56,48 @@ def update_input_frame(request):
 	shape = data.shape
 	data = data.tolist()
 	return JsonResponse({"image_data": data, "shape": shape})
+
+
+def prob_label(request):
+	while app is None:
+		continue
+	print(app.new_data_available)
+	if app.new_data_available["prob_label"]:
+		print(app.data_webapp["prob_label"])
+		for data in app.data_webapp["prob_label"]:
+			data[1] = 1 if data[1] else 0
+		print(app.data_webapp["prob_label"])
+		return JsonResponse({"data": app.data_webapp["prob_label"]})
+	else:
+		return JsonResponse({"data": "none"})
+
+
+def layer_data(request):
+	if app.new_data_available["layer_data"]:
+		data = app.data_webapp["layer_data"]
+		shape = data.shape
+		data = data.tolist()
+		selected_layer = app.state.layer
+		return JsonResponse({"data": data, "shape": shape, "selected_layer": selected_layer})
+
+
+@csrf_exempt
+def update_back_pane(request):
+	print("in back pane")
+	print(request.POST)
+	number = request.POST.get("number", None)
+	if number is None:
+		return HttpResponseBadRequest()
+	app.state.selected_unit = int(number)
+	app.state.cursor_area = "bottom"
+	app.state.back_enabled = True
+	app.state.drawing_stale = True
+	app.state.back_stale = True
+	while not app.new_data_available.get("back_draw_image", False):
+		continue
+	print("after while in back pane")
+	data = app.data_webapp["back_draw_image"]
+	shape = data.shape
+	data = data.tolist()
+	app.new_data_available["back_draw_image"] = False
+	return JsonResponse({"data": data, "shape": shape})

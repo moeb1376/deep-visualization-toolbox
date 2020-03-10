@@ -77,7 +77,7 @@ class LiveVis(object):
 			'thick': self.settings.help_thick
 		}
 		self.nets_layer_info = []
-		self.preprocess = False
+		self.preprocess = 0
 
 	def init_window(self):
 		cv2.namedWindow(self.window_name)
@@ -142,8 +142,8 @@ class LiveVis(object):
 		frame_for_apps = None
 		redraw_needed = True  # Force redraw the first time
 		imshow_needed = True
-		self.preprocess = True
 		while not self.quit:
+			self.preprocess += 1
 			# Call any heartbeats
 			for heartbeat in heartbeat_functions:
 				# print 'Heartbeat: calling', heartbeat

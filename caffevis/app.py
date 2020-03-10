@@ -84,7 +84,7 @@ class CaffeVisApp(BaseApp):
 					# unknown file extension, trying to load as numpy array
 					self._data_mean = np.load(settings.caffevis_data_mean)
 					print("Loaded mean from numpy file, data_mean.shape: ", self._data_mean.shape
-					      )
+						  )
 			except IOError:
 				print('\n\nCound not load mean file:', settings.caffevis_data_mean)
 				print('Ensure that the values in settings.py point to a valid model weights file, network')
@@ -99,7 +99,7 @@ class CaffeVisApp(BaseApp):
 			assert excess_h >= 0 and excess_w >= 0, 'mean should be at least as large as %s' % repr(input_shape)
 			print(excess_h, input_shape, excess_w, type(self._data_mean))
 			self._data_mean = self._data_mean[:, (excess_h // 2):(excess_h // 2 + input_shape[0]),
-			                  (excess_w // 2):(excess_w // 2 + input_shape[1])]
+							  (excess_w // 2):(excess_w // 2 + input_shape[1])]
 		elif settings.caffevis_data_mean is None:
 			self._data_mean = None
 		else:
@@ -127,6 +127,8 @@ class CaffeVisApp(BaseApp):
 			raise Exception('caffevis_jpg_cache_size must be at least 10MB for normal operation.')
 		self.img_cache = FIFOLimitedArrayCache(settings.caffevis_jpg_cache_size)
 
+		self.new_data_available = {}
+		self.data_webapp = {}
 		self._populate_net_layer_info()
 
 	def _populate_net_layer_info(self):
@@ -145,9 +147,10 @@ class CaffeVisApp(BaseApp):
 			self.net_layer_info[key]['data_shape'] = blob_shape[1:]  # Chop off batch size
 			self.net_layer_info[key]['n_tiles'] = blob_shape[1]
 			self.net_layer_info[key]['tiles_rc'] = get_tiles_height_width_ratio(blob_shape[1],
-			                                                                    self.settings.caffevis_layers_aspect_ratio)
+																				self.settings.caffevis_layers_aspect_ratio)
 			self.net_layer_info[key]['tile_rows'] = self.net_layer_info[key]['tiles_rc'][0]
 			self.net_layer_info[key]['tile_cols'] = self.net_layer_info[key]['tiles_rc'][1]
+			self.new_data_available["net_layer_info"] = True
 
 	def start(self):
 		self.state = CaffeVisAppState(self.net, self.settings, self.bindings, self.net_layer_info)
@@ -157,17 +160,17 @@ class CaffeVisApp(BaseApp):
 		if self.proc_thread is None or not self.proc_thread.is_alive():
 			# Start thread if it's not already running
 			self.proc_thread = CaffeProcThread(self.settings, self.net, self.state,
-			                                   self.settings.caffevis_frame_wait_sleep,
-			                                   self.settings.caffevis_pause_after_keys,
-			                                   self.settings.caffevis_heartbeat_required,
-			                                   self.settings.caffevis_mode_gpu)
+											   self.settings.caffevis_frame_wait_sleep,
+											   self.settings.caffevis_pause_after_keys,
+											   self.settings.caffevis_heartbeat_required,
+											   self.settings.caffevis_mode_gpu)
 			self.proc_thread.start()
 
 		if self.jpgvis_thread is None or not self.jpgvis_thread.is_alive():
 			# Start thread if it's not already running
 			self.jpgvis_thread = JPGVisLoadingThread(self.settings, self.state, self.img_cache,
-			                                         self.settings.caffevis_jpg_load_sleep,
-			                                         self.settings.caffevis_heartbeat_required)
+													 self.settings.caffevis_jpg_load_sleep,
+													 self.settings.caffevis_heartbeat_required)
 			self.jpgvis_thread.start()
 
 	def get_heartbeats(self):
@@ -197,7 +200,7 @@ class CaffeVisApp(BaseApp):
 	def handle_input(self, input_image, panes):
 		if self.debug_level >= 1:
 			print('handle_input: frame number', self.handled_frames, 'is',
-			      'None' if input_image is None else 'Available')
+				  'None' if input_image is None else 'Available')
 		self.handled_frames += 1
 		if self._can_skip_all(panes):
 			return
@@ -237,21 +240,38 @@ class CaffeVisApp(BaseApp):
 			if 'caffevis_layers' in panes:
 				layer_data_3D_highres = self._draw_layer_pane(panes['caffevis_layers'])
 				layer_data_3D_uint8 = ensure_uint255(layer_data_3D_highres)
+				self.new_data_available["layer_data"] = True
+				self.data_webapp["layer_data"] = layer_data_3D_uint8
 			if 'caffevis_aux' in panes:
 				self._draw_aux_pane(panes['caffevis_aux'], layer_data_3D_highres)
 			if 'caffevis_back' in panes:
 				# Draw back pane as normal
 				back_draw_image = self._draw_back_pane(panes['caffevis_back'])
+				if back_draw_image is not None:
+					print("back draw is down")
+					self.new_data_available["back_draw_image"] = True
+					self.data_webapp["back_draw_image"] = back_draw_image
 				if self.state.layers_pane_zoom_mode == 2:
 					# ALSO draw back pane into layers pane
 					back_draw_image = self._draw_back_pane(panes['caffevis_layers'])
+
 			if 'caffevis_jpgvis' in panes:
 				self._draw_jpgvis_pane(panes['caffevis_jpgvis'])
-
+				self.new_data_available["jpgvis_pane"] = True
 			with self.state.lock:
 				self.state.drawing_stale = False
 				self.state.caffe_net_state = 'free'
 		return do_draw
+
+	def _prob_labels(self):
+		probs_flat = self.net.blobs[self.settings.caffevis_prob_layer].data.flatten()
+		top_5 = probs_flat.argsort()[-1:-6:-1]
+		self.data_webapp["prob_label"] = []
+		for idx in top_5:
+			prob = probs_flat[idx]
+			text = '%.2f %s' % (prob, self.labels[idx])
+			self.data_webapp["prob_label"].append([text, prob > 0.40])
+		self.new_data_available["prob_label"] = True
 
 	def _draw_prob_labels_pane(self, pane):
 		'''Adds text label annotation atop the given pane.'''
@@ -261,9 +281,9 @@ class CaffeVisApp(BaseApp):
 
 		# pane.data[:] = to_255(self.settings.window_background)
 		defaults = {'face': getattr(cv2, self.settings.caffevis_class_face),
-		            'fsize': self.settings.caffevis_class_fsize,
-		            'clr': to_255(self.settings.caffevis_class_clr_0),
-		            'thick': self.settings.caffevis_class_thick}
+					'fsize': self.settings.caffevis_class_fsize,
+					'clr': to_255(self.settings.caffevis_class_clr_0),
+					'thick': self.settings.caffevis_class_thick}
 		loc = self.settings.caffevis_class_loc[::-1]  # Reverse to OpenCV c,r order
 		clr_0 = to_255(self.settings.caffevis_class_clr_0)
 		clr_1 = to_255(self.settings.caffevis_class_clr_1)
@@ -282,7 +302,7 @@ class CaffeVisApp(BaseApp):
 			strings.append([fs])  # Line contains just fs
 
 		cv2_typeset_text(pane.data, strings, loc,
-		                 line_spacing=self.settings.caffevis_class_line_spacing)
+						 line_spacing=self.settings.caffevis_class_line_spacing)
 
 	def _draw_control_pane(self, pane):
 		pane.data[:] = to_255(self.settings.window_background)
@@ -294,9 +314,9 @@ class CaffeVisApp(BaseApp):
 
 		strings = []
 		defaults = {'face': getattr(cv2, self.settings.caffevis_control_face),
-		            'fsize': self.settings.caffevis_control_fsize,
-		            'clr': to_255(self.settings.caffevis_control_clr),
-		            'thick': self.settings.caffevis_control_thick}
+					'fsize': self.settings.caffevis_control_fsize,
+					'clr': to_255(self.settings.caffevis_control_clr),
+					'thick': self.settings.caffevis_control_thick}
 
 		for ii in range(len(self.layer_print_names)):
 			fs = FormattedString(self.layer_print_names[ii], defaults)
@@ -315,23 +335,23 @@ class CaffeVisApp(BaseApp):
 			strings.append(fs)
 
 		cv2_typeset_text(pane.data, strings, loc,
-		                 line_spacing=self.settings.caffevis_control_line_spacing,
-		                 wrap=True)
+						 line_spacing=self.settings.caffevis_control_line_spacing,
+						 wrap=True)
 
 	def _draw_status_pane(self, pane):
 		pane.data[:] = to_255(self.settings.window_background)
 
 		defaults = {'face': getattr(cv2, self.settings.caffevis_status_face),
-		            'fsize': self.settings.caffevis_status_fsize,
-		            'clr': to_255(self.settings.caffevis_status_clr),
-		            'thick': self.settings.caffevis_status_thick}
+					'fsize': self.settings.caffevis_status_fsize,
+					'clr': to_255(self.settings.caffevis_status_clr),
+					'thick': self.settings.caffevis_status_thick}
 		loc = self.settings.caffevis_status_loc[::-1]  # Reverse to OpenCV c,r order
 
 		status = StringIO()
 		fps = self.proc_thread.approx_fps()
 		with self.state.lock:
 			print('pattern' if self.state.pattern_mode else ('back' if self.state.layers_show_back else 'fwd'), end=' ',
-			      file=status)
+				  file=status)
 			print('%s:%d |' % (self.state.layer, self.state.selected_unit), end=' ', file=status)
 			if not self.state.back_enabled:
 				print("Back: off", end=" ", file=status)
@@ -340,7 +360,7 @@ class CaffeVisApp(BaseApp):
 
 				print('(from %s_%d, disp %s)' % (
 					self.state.backprop_layer, self.state.backprop_unit, self.state.back_filt_mode), end=" ",
-				      file=status)
+					  file=status)
 			print("|", file=status)
 			print('Boost: %g/%g' % (self.state.layer_boost_indiv, self.state.layer_boost_gamma), end=" ", file=status)
 
@@ -354,7 +374,7 @@ class CaffeVisApp(BaseApp):
 		strings = [FormattedString(line, defaults) for line in status.getvalue().split('\n')]
 
 		cv2_typeset_text(pane.data, strings, loc,
-		                 line_spacing=self.settings.caffevis_status_line_spacing)
+						 line_spacing=self.settings.caffevis_status_line_spacing)
 
 	def _draw_layer_pane(self, pane):
 		'''Returns the data shown in highres format, b01c order.'''
@@ -380,7 +400,7 @@ class CaffeVisApp(BaseApp):
 
 			if self.settings.caffevis_jpgvis_layers and load_layer in self.settings.caffevis_jpgvis_layers:
 				jpg_path = os.path.join(self.settings.caffevis_unit_jpg_dir,
-				                        'regularized_opt', load_layer, 'whole_layer.jpg')
+										'regularized_opt', load_layer, 'whole_layer.jpg')
 
 				# Get highres version
 				# cache_before = str(self.img_cache)
@@ -426,13 +446,13 @@ class CaffeVisApp(BaseApp):
 					layer_dat_3D_normalized = np.tile(self.settings.stale_background, layer_dat_3D.shape + (1,))
 				else:
 					layer_dat_3D_normalized = tile_images_normalize(layer_dat_3D,
-					                                                boost_indiv=self.state.layer_boost_indiv,
-					                                                boost_gamma=self.state.layer_boost_gamma,
-					                                                neg_pos_colors=((1, 0, 0), (0, 1, 0)))
+																	boost_indiv=self.state.layer_boost_indiv,
+																	boost_gamma=self.state.layer_boost_gamma,
+																	neg_pos_colors=((1, 0, 0), (0, 1, 0)))
 			else:
 				layer_dat_3D_normalized = tile_images_normalize(layer_dat_3D,
-				                                                boost_indiv=self.state.layer_boost_indiv,
-				                                                boost_gamma=self.state.layer_boost_gamma)
+																boost_indiv=self.state.layer_boost_indiv,
+																boost_gamma=self.state.layer_boost_gamma)
 			# print ' ===layer_dat_3D_normalized.shape', layer_dat_3D_normalized.shape, 'layer_dat_3D_normalized dtype', layer_dat_3D_normalized.dtype, 'range', layer_dat_3D_normalized.min(), layer_dat_3D_normalized.max()
 
 			display_3D = layer_dat_3D_normalized
@@ -462,7 +482,7 @@ class CaffeVisApp(BaseApp):
 				highlights[self.state.backprop_unit] = self.settings.caffevis_layer_clr_back_sel  # in [0,1] range
 
 		_, display_2D = tile_images_make_tiles(display_3D, hw=(tile_rows, tile_cols), padval=padval,
-		                                       highlights=highlights)
+											   highlights=highlights)
 
 		if display_3D_highres is None:
 			display_3D_highres = display_3D
@@ -487,9 +507,9 @@ class CaffeVisApp(BaseApp):
 		if self.settings.caffevis_label_layers and self.state.layer in self.settings.caffevis_label_layers and self.labels and self.state.cursor_area == 'bottom':
 			# Display label annotation atop layers pane (e.g. for fc8/prob)
 			defaults = {'face': getattr(cv2, self.settings.caffevis_label_face),
-			            'fsize': self.settings.caffevis_label_fsize,
-			            'clr': to_255(self.settings.caffevis_label_clr),
-			            'thick': self.settings.caffevis_label_thick}
+						'fsize': self.settings.caffevis_label_fsize,
+						'clr': to_255(self.settings.caffevis_label_clr),
+						'thick': self.settings.caffevis_label_thick}
 			loc_base = self.settings.caffevis_label_loc[::-1]  # Reverse to OpenCV c,r order
 			lines = [FormattedString(self.labels[self.state.selected_unit], defaults)]
 			cv2_typeset_text(pane.data, lines, loc_base)
@@ -512,6 +532,7 @@ class CaffeVisApp(BaseApp):
 			pane.data[0:unit_data_resize.shape[0], 0:unit_data_resize.shape[1], :] = unit_data_resize
 		elif mode == 'prob_labels':
 			self._draw_prob_labels_pane(pane)
+		self._prob_labels()
 
 	def _draw_back_pane(self, pane):
 		mode = None
@@ -642,9 +663,9 @@ class CaffeVisApp(BaseApp):
 
 	def draw_help(self, help_pane, locy):
 		defaults = {'face': getattr(cv2, self.settings.help_face),
-		            'fsize': self.settings.help_fsize,
-		            'clr': to_255(self.settings.help_clr),
-		            'thick': self.settings.help_thick}
+					'fsize': self.settings.help_fsize,
+					'clr': to_255(self.settings.help_clr),
+					'thick': self.settings.help_thick}
 		loc_base = self.settings.help_loc[::-1]  # Reverse to OpenCV c,r order
 		locx = loc_base[0]
 
@@ -669,17 +690,17 @@ class CaffeVisApp(BaseApp):
 		keys_nav_f = ','.join([kk[0] for kk in (klf, krf, kuf, kdf)])
 		nav_string = 'Navigate with %s%s. Use %s to move faster.' % (keys_nav_0, keys_nav_1, keys_nav_f)
 		lines.append([FormattedString('', defaults, width=120, align='right'),
-		              FormattedString(nav_string, defaults)])
+					  FormattedString(nav_string, defaults)])
 
 		for tag in ('sel_layer_left', 'sel_layer_right', 'zoom_mode', 'pattern_mode',
-		            'ez_back_mode_loop', 'freeze_back_unit', 'show_back', 'back_mode', 'back_filt_mode',
-		            'boost_gamma', 'boost_individual', 'reset_state'):
+					'ez_back_mode_loop', 'freeze_back_unit', 'show_back', 'back_mode', 'back_filt_mode',
+					'boost_gamma', 'boost_individual', 'reset_state'):
 			key_strings, help_string = self.bindings.get_key_help(tag)
 			label = '%10s:' % (','.join(key_strings))
 			lines.append([FormattedString(label, defaults, width=120, align='right'),
-			              FormattedString(help_string, defaults)])
+						  FormattedString(help_string, defaults)])
 
 		locy = cv2_typeset_text(help_pane.data, lines, (locx, locy),
-		                        line_spacing=self.settings.help_line_spacing)
+								line_spacing=self.settings.help_line_spacing)
 
 		return locy

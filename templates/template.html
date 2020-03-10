@@ -46,28 +46,31 @@
 <div class="row">
     <div class="col s3  ">
         <div class="center-align" id="input_frame">
-            <canvas id="input_canvas" class="responsive-canvas">asda</canvas>
+            <canvas id="input_canvas" class="responsive-canvas">
+                Your browser does not support the HTML5 canvas tag.
+            </canvas>
         </div>
         <div>
             <ul class="collapsible expandable">
                 <li>
                     <div class="collapsible-header"><i class="material-icons">label</i>Label predictions</div>
-                    <div class="collapsible-body">
-                        <span class="green-text text-darken-4">0.55 tiger shark</span>
-                        <br>
-                        <span class="green-text text-darken-4">0.44 great white shark</span>
-                        <br>
-                        <span>0.01 hammerhead</span>
-                        <br>
-                        <span>0.00 dugong</span>
+                    <div class="collapsible-body" id="prob_label">
+                        {% for p in prob_label %}
+                            {% if p.1 %}
+                                <span class="green-text text-darken-4">{{ p.0 }}</span>
+                                <br>
+                            {% else %}
+                                <span>{{ p.0 }}</span>
+                                <br>
+                            {% endif %}
+                        {% endfor %}
                     </div>
                 </li>
                 <li>
                     <div class="collapsible-header"><i class="material-icons">filter_none</i>Selected channel</div>
                     <div class="collapsible-body">
                         <span>
-                            <img class="responsive-img"
-                                 src="../statics/img/Screenshot%20from%202020-02-28%2015-19-27.png">
+                            <canvas id="selected_channel_canvas" style="width: 100%"></canvas>
                         </span>
                     </div>
                 </li>
@@ -77,8 +80,7 @@
                     </div>
                     <div class="collapsible-body">
                         <span>
-                            <img class="responsive-img"
-                                 src="../statics/img/Screenshot%20from%202020-02-28%2015-19-47.png">
+                            <canvas id="back_canvas" style="width: 100%;"></canvas>
                         </span>
                     </div>
                 </li>
@@ -87,7 +89,7 @@
     </div>
     <div class="col s6">
         <ul class="tabs">
-            {% for tab in layer_info %}
+            {% for tab in net_layer_info %}
                 {% if forloop.counter == 1 %}
                     <li class="tab"><a class="active" href="#{{ tab }}">{{ tab }}</a></li>
                 {% else %}
@@ -95,35 +97,36 @@
                 {% endif %}
             {% endfor %}
         </ul>
-        {% for tab in layer_info %}
+        {% for tab in net_layer_info %}
             <div id="{{ tab }}" class="col s12">
-                {{ tab }}
             </div>
         {% endfor %}
     </div>
     <div class="col s3">
         <div class="center-align">
             <h5>Gradient ascent</h5>
-            <img src="../statics/img/Screenshot%20from%202020-02-28%2015-20-15.png" class="responsive-img">
+            <img id="regularized" src="" style="width: 100%" class="responsive-img">
         </div>
         <div class="center-align">
             <h5>Top 9 image</h5>
-            <img src="../statics/img/Screenshot%20from%202020-02-28%2015-20-26.png" class="responsive-img">
+            <img id="top_img" src="" style="width: 100%" class="responsive-img">
         </div>
         <div class="center-align">
             <h5>Deconv of top 9</h5>
-            <img src="../statics/img/Screenshot%20from%202020-02-28%2015-20-36.png" class="responsive-img">
+            <img id="max_deconv" src="" class="responsive-img" style="width: 100%">
         </div>
     </div>
 </div>
 <!-- Compiled and minified JavaScript -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="{% static 'caffevis.js' %}"></script>
 <script
         src="https://code.jquery.com/jquery-3.4.1.min.js"
         integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
         crossorigin="anonymous"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // materialize init
         let collapsible_elems = document.querySelectorAll('.collapsible');
         let collapsible_options = {accordion: false};
         let collapsible_instances = M.Collapsible.init(collapsible_elems, collapsible_options);
@@ -133,34 +136,17 @@
         let tabs_elems = document.querySelectorAll('.tabs');
         let tabs_options = {}
         let tabs_instances = M.Tabs.init(tabs_elems, tabs_options)
-    });
-    let update_input_frame = $.ajax({url: "{% url "caffevis_API:update_input_frame" %}", method: "GET"});
-    update_input_frame.done(result => {
-        let shape = result.shape;
-        let data = result.image_data;
-        console.log(result);
-        {#let input_frame = $("#input_frame");#}
-        let input_canvas = document.getElementById("input_canvas");
-        input_canvas.width = shape[1];
-        input_canvas.height = shape[0];
-        let ctx = input_canvas.getContext("2d");
-        let imageData = ctx.createImageData(shape[0], shape[1]);
-        console.log(data)
-        for (let i = 0; i < shape[1]; i++) {
-            for (let j = 0; j < shape[0]; j++) {
-                let index = (j + i * shape[1]) * 4;
-                imageData.data[index + 0] = data[i][j][0];
-                imageData.data[index + 1] = data[i][j][1];
-                imageData.data[index + 2] = data[i][j][2];
-                imageData.data[index + 3] = 255;
-            }
-        }
-        console.log(ctx)
-        console.log(imageData)
-        console.log(input_canvas)
-        ctx.putImageData(imageData, 0, 0);
 
-    })
+        // caffevis init
+        let get_input_frame = $.ajax({url: "{% url "caffevis_API:input_frame" %}", method: "GET"});
+        get_input_frame.done(update_input_frame);
+        let get_layer_data = $.ajax({url: "{% url "caffevis_API:layer_data" %}", method: "GET"});
+        get_layer_data.done(update_layer_data);
+    });
+
+
+    {#let get_prob_label = $.ajax({url: "{% url "caffevis_API:prob_layer" %}", method: "GET"});#}
+    {#get_prob_label.done(update_prob_label);#}
 </script>
 </body>
 </html>

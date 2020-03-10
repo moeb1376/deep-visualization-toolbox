@@ -117,3 +117,5 @@ STATIC_URL = '/statics/'
 STATICFILES_DIRS = [
 	os.path.join(BASE_DIR, "statics"),
 ]
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "models", "caffenet-yos", "unit_jpg_vis")

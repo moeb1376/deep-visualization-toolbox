@@ -1,40 +1,65 @@
-.divider_border{
+
+.divider_border {
     border-right: 1px solid #e0e0e0;
 }
-.sidenav li>a{
+
+.sidenav li > a {
     padding-right: unset !important;
     padding-left: 10px;
 }
-.sidenav li a .material-icons{
+
+.sidenav li a .material-icons {
     margin-right: 5px !important;
 }
-.sidenav{
-    padding-top:4vh !important;
+
+.sidenav {
+    padding-top: 4vh !important;
 }
-.sidenav li{
+
+.sidenav li {
     margin-bottom: 1vh;
 }
-.switch label{
+
+.switch label {
     font-size: unset;
     color: black;
 }
-.switch label .lever{
+
+.switch label .lever {
     background-color: #84c7c1 !important;
 }
-ul.tabs{
+
+ul.tabs {
     height: 60px;
 }
+
 .tabs .tab a:focus, .tabs .tab a:focus.active {
-  background-color: rgba(0, 131, 143, 0.2);
-  outline: none;
+    background-color: rgba(0, 131, 143, 0.2);
+    outline: none;
 }
-li.indicator{
+
+li.indicator {
     background-color: #00b2c2 !important;
 }
-.tabs .tab a{
-    color:#00838f !important;
+
+.tabs .tab a {
+    color: #00838f !important;
 }
-.responsive-canvas{
+
+.responsive-canvas {
     max-width: 100%;
     height: auto;
+}
+
+.layer_canvas {
+    border: transparent solid 2px;
+    margin-bottom: -5px;
+}
+
+.layer_canvas:hover {
+    cursor: pointer;
+}
+
+.layer_canvas.active {
+    border: #00838f solid 2px;
 }
