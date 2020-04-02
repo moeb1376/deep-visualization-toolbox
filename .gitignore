@@ -2,3 +2,7 @@ settings_local.py
 settings.py.templatec
 *.pyc
 *.DS_Store
+.idea
+.vscode
+unit_jpg_vis
+models/caffenet-yos/caffenet-yos_max_im.tar.gz
