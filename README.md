@@ -103,7 +103,9 @@ And install `scikit-image` using pip:
 
 You may have already installed the `python-opencv` bindings as part of the Caffe setup process. If `import cv2` works from Python, then you're all set. Similarly for `import scipy` and `import skimage`.
 
+In order to use `webapp` you also need to install bellow prerequisites:
 
+    $ pip install django django-eventstream channels
 
 ### Step 3: Download and configure Deep Visualization Toolbox code
 
@@ -136,7 +138,13 @@ Finally, download the default model weights and corresponding top-9 visualizatio
 Simple:
 
     $ ./run_toolbox.py
+    
+And also after installing prerequisites `webapp` in order to run your app as webapp you must run this commands:
 
+    $ python manage.py runserver
+    
+and then go [this url](https://127.0.0.1:8000):
+    
 Once the toolbox is running, push 'h' to show a help screen. You can also have a look at `bindings.py` to see what the various keys do. If the window is too large or too small for your screen, set the `global_scale` and `global_font_size` variables in `settings_local.py` to values smaller or larger than 1.0.
 
 
