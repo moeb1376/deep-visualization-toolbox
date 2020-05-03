@@ -45,6 +45,7 @@ def main_page(request):
 		data[1] = 1 if data[1] else 0
 	context["prob_label"] = datas
 	context["net_layer_info"] = clean_net_layer_info(lv.nets_layer_info)
+	app.state.restart_web_app()
 	return render(request, "template.html", context)
 
 
@@ -80,7 +81,7 @@ def prob_label(request):
 
 
 def layer_data(request):
-	print(app.new_data_available["layer_data"],app.state.new_layer_data)
+	print(app.new_data_available["layer_data"], app.state.new_layer_data)
 	if app.new_data_available["layer_data"] and app.state.new_layer_data:
 		data = app.data_webapp["layer_data"]
 		shape = data.shape
@@ -88,6 +89,12 @@ def layer_data(request):
 		selected_layer = app.state.layer
 		app.new_data_available["layer_data"] = False
 		app.state.new_layer_data = False
+		return JsonResponse({"data": data, "shape": shape, "selected_layer": selected_layer})
+	elif app.state.base_data.get("old_layer_data", None) is not None:
+		data = app.state.base_data.get("old_layer_data", None)
+		shape = data.shape
+		data = data.tolist()
+		selected_layer = app.state.layer
 		return JsonResponse({"data": data, "shape": shape, "selected_layer": selected_layer})
 
 

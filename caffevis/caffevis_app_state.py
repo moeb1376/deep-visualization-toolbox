@@ -52,6 +52,7 @@ class CaffeVisAppState(object):
 		self.show_label_predictions = self.settings.caffevis_init_show_label_predictions
 		self.show_unit_jpgs = self.settings.caffevis_init_show_unit_jpgs
 		self.drawing_stale = True
+		self.new_layer_data = True
 		kh, _ = self.bindings.get_key_help('help_mode')
 		self.extra_msg = '%s for help' % kh[0]
 
@@ -262,3 +263,6 @@ class CaffeVisAppState(object):
 				self.layer = self._layers[self.layer_idx]
 				self._ensure_valid_selected()
 				self.drawing_stale = True
+
+	def restart_web_app(self):
+		self._reset_user_state()

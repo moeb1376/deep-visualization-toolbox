@@ -250,6 +250,7 @@ class CaffeVisApp(BaseApp):
 					with self.data_available_lock:
 						self.new_data_available["layer_data"] = True
 						self.data_webapp["layer_data"] = layer_data_3D_uint8
+						self.base_data["old_layer_data"] = layer_data_3D_uint8
 						send_event("test", "update", {"type": "layerData"})
 			if 'caffevis_aux' in panes:
 				self._draw_aux_pane(panes['caffevis_aux'], layer_data_3D_highres)

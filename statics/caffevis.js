@@ -73,24 +73,12 @@ function updateLayerData(result) {
     });
 }
 
-function imagelayer(result) {
-    let shape = result.shape;
-    let data = result.data;
-    let layer = result.selected_layer;
-    console.log(result);
-    let layerCanvas;
-    $("#" + layer).empty();
-    for (var numberLayer = 0; numberLayer < shape[0]; numberLayer++) {
-        layerCanvas = document.createElement("img");
-        layerCanvas.className = "layer_canvas";
-        layerCanvas.setAttribute("name", layer + ":" + numberLayer.toString());
-        layerCanvas.setAttribute("src", "data:image/png;base64," + data[numberLayer]);
-        // layerCanvas.width = 55;
-        // layerCanvas.height = 55;
-        $("#" + layer).append(layerCanvas);
-        // $("#" + layer).append(layerCanvas);
-    }
-}
+//change layer width
+$("#zoom_layer").change(event => {
+    console.log(event.target.value);
+    let value = event.target.value;
+    $('.layer_canvas').css('width', `${value}%`);
+});
 
 function updateSelectedChannelImg(data, shape) {
     let selectedChannelCanvas = document.getElementById("selected_channel_canvas");
@@ -156,12 +144,15 @@ let updateBackPaneImage = (result) => {
 $("#layers li").click(event => {
     let name = $(event.target).attr("name");
     let changeLayer = $.ajax({url: "/api/change_layer/", method: "POST", data: {"name": name}});
-    changeLayer.done(event => console.log(event));
+    changeLayer.done(event => {
+        console.log(event);
+        $("#zoom_layer").val(10);
+    });
 });
 let getLayerData = () => {
     let getLayerData = $.ajax({url: "/api/layer_data/", method: "GET"});
     getLayerData.done(updateLayerData);
-}
+};
 let listOfFunction = {
     "updateJpgvis": arrowFunctionUpdateJpgvis,
     "backPane": getBackPaneData,

@@ -88,6 +88,10 @@
         </div>
     </div>
     <div class="col s6">
+        <p class="range-field" style="width: 50%">
+            <input type="range" id="zoom_layer" min="10" max="100" value="10"/>
+            <label for="zoom_layer">Layers Zoom</label>
+        </p>
         <ul class="tabs" id="layers">
             {% for tab in net_layer_info %}
                 {% if forloop.counter == 1 %}
