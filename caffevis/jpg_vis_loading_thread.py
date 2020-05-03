@@ -8,9 +8,10 @@ from .caffevis_helper import crop_to_corner
 
 
 class JPGVisLoadingThread(CodependentThread):
-	'''Loads JPGs necessary for caffevis_jpgvis pane in separate
-	thread and inserts them into the cache.
-	'''
+	"""
+		Loads JPGs necessary for caffevis_jpgvis pane in separate
+		thread and inserts them into the cache.
+	"""
 
 	def __init__(self, settings, state, cache, loop_sleep, heartbeat_required):
 		CodependentThread.__init__(self, heartbeat_required)
@@ -54,9 +55,9 @@ class JPGVisLoadingThread(CodependentThread):
 				resize_shape = (data_shape[0], data_shape[1] / 3)
 			# 0. e.g. regularized_opt/conv1/conv1_0037_montage.jpg
 			jpg_path = os.path.join(self.settings.caffevis_unit_jpg_dir,
-			                        'regularized_opt',
-			                        state_layer,
-			                        '%s_%04d_montage.jpg' % (state_layer, state_selected_unit))
+									'regularized_opt',
+									state_layer,
+									'%s_%04d_montage.jpg' % (state_layer, state_selected_unit))
 			try:
 				img = caffe_load_image(jpg_path, color=True)
 				img_corner = crop_to_corner(img, 2)
@@ -64,13 +65,13 @@ class JPGVisLoadingThread(CodependentThread):
 			except IOError:
 				print(
 					'\nAttempted to load file %s but failed. To supress this warning, remove layer "%s" from settings.caffevis_jpgvis_layers' % (
-					jpg_path, state_layer))
+						jpg_path, state_layer))
 				pass
 			# 1. e.g. max_im/conv1/conv1_0037.jpg
 			jpg_path = os.path.join(self.settings.caffevis_unit_jpg_dir,
-			                        'max_im',
-			                        state_layer,
-			                        '%s_%04d.jpg' % (state_layer, state_selected_unit))
+									'max_im',
+									state_layer,
+									'%s_%04d.jpg' % (state_layer, state_selected_unit))
 			try:
 				img = caffe_load_image(jpg_path, color=True)
 				images[1] = ensure_uint255_and_resize_to_fit(img, resize_shape)
@@ -79,9 +80,9 @@ class JPGVisLoadingThread(CodependentThread):
 			# 2. e.g. max_deconv/conv1/conv1_0037.jpg
 			try:
 				jpg_path = os.path.join(self.settings.caffevis_unit_jpg_dir,
-				                        'max_deconv',
-				                        state_layer,
-				                        '%s_%04d.jpg' % (state_layer, state_selected_unit))
+										'max_deconv',
+										state_layer,
+										'%s_%04d.jpg' % (state_layer, state_selected_unit))
 				img = caffe_load_image(jpg_path, color=True)
 				images[2] = ensure_uint255_and_resize_to_fit(img, resize_shape)
 			except IOError:

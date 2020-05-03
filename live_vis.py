@@ -20,6 +20,7 @@ from bindings import bindings
 from input_fetcher import InputImageFetcher
 
 pane_debug_clr = (255, 64, 64)
+import settings as SETTINGS
 
 
 class ImproperlyConfigured(Exception):
@@ -27,7 +28,9 @@ class ImproperlyConfigured(Exception):
 
 
 class Pane(object):
-	'''Hold info about one window pane (rectangular region within the main window)'''
+	"""
+	Hold info about one window pane (rectangular region within the main window)
+	"""
 
 	def __init__(self, i_begin, j_begin, i_size, j_size):
 		self.i_begin = i_begin
@@ -40,9 +43,11 @@ class Pane(object):
 
 
 class LiveVis(object):
-	'''Runs the demo'''
+	"""
+	Runs the demo
+	"""
 
-	def __init__(self, settings):
+	def __init__(self, settings=SETTINGS):
 		self.settings = settings
 		self.bindings = bindings
 

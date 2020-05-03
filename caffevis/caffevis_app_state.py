@@ -25,6 +25,7 @@ class CaffeVisAppState(object):
 		self.next_frame = None
 		self.jpgvis_to_load_key = None
 		self.last_key_at = 0
+		self.new_layer_data = True
 		self.quit = False
 
 		self._reset_user_state()
@@ -101,7 +102,7 @@ class CaffeVisAppState(object):
 			elif tag == 'boost_gamma':
 				self.change_boost_gamma()
 			elif tag == 'pattern_mode':
-				self.toggle_patter_mode()
+				self.toggle_pattern_mode()
 			elif tag == 'show_back':
 				# If in pattern mode: switch to fwd/back. Else toggle fwd/back mode
 				if self.pattern_mode:
@@ -215,7 +216,7 @@ class CaffeVisAppState(object):
 		self.layer_boost_gamma_idx = (self.layer_boost_gamma_idx + 1) % len(self.layer_boost_gamma_choices)
 		self.layer_boost_gamma = self.layer_boost_gamma_choices[self.layer_boost_gamma_idx]
 
-	def toggle_patter_mode(self):
+	def toggle_pattern_mode(self):
 		self.pattern_mode = not self.pattern_mode
 		if self.pattern_mode and not hasattr(self.settings, 'caffevis_unit_jpg_dir'):
 			print('Cannot switch to pattern mode; caffevis_unit_jpg_dir not defined in settings.py.')
@@ -236,8 +237,28 @@ class CaffeVisAppState(object):
 				self.backprop_unit = self.selected_unit
 				self.back_stale = True  # If there is any change, back diffs are now stale
 
-	def change_selected_unit_and_back_enable_webapp(self, number):
-		self.selected_unit = number
-		self.back_enabled = True
-		self.back_stale = True
-		self._ensure_valid_selected()
+	def change_selected_unit(self, number):
+		with self.lock:
+			self.selected_unit = number
+			self.cursor_area = 'bottom'
+			self._ensure_valid_selected()
+			self.drawing_stale = True
+
+	def toggle_back_mode(self):
+		with self.lock:
+			if not self.back_enabled:
+				self.back_enabled = True
+				self.back_mode = 'grad'
+				self.back_stale = True
+			else:
+				self.back_enabled = False
+			self.drawing_stale = True
+
+	def change_selected_layer(self, idx):
+		self.new_layer_data = not self.layer_idx == idx
+		if self.new_layer_data:
+			with self.lock:
+				self.layer_idx = idx
+				self.layer = self._layers[self.layer_idx]
+				self._ensure_valid_selected()
+				self.drawing_stale = True

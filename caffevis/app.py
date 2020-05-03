@@ -3,6 +3,8 @@
 
 import sys
 import os
+from threading import Lock
+
 import cv2
 import numpy as np
 import time
@@ -19,6 +21,7 @@ from .jpg_vis_loading_thread import JPGVisLoadingThread
 from .caffevis_app_state import CaffeVisAppState
 from .caffevis_helper import get_pretty_layer_name, read_label_file, load_sprite_image, load_square_sprite_image, \
 	check_force_backward_true
+from django_eventstream import send_event
 
 
 class CaffeVisApp(BaseApp):
@@ -127,8 +130,10 @@ class CaffeVisApp(BaseApp):
 			raise Exception('caffevis_jpg_cache_size must be at least 10MB for normal operation.')
 		self.img_cache = FIFOLimitedArrayCache(settings.caffevis_jpg_cache_size)
 
+		self.data_available_lock = Lock()
 		self.new_data_available = {}
 		self.data_webapp = {}
+		self.base_data = {}
 		self._populate_net_layer_info()
 
 	def _populate_net_layer_info(self):
@@ -150,7 +155,8 @@ class CaffeVisApp(BaseApp):
 																				self.settings.caffevis_layers_aspect_ratio)
 			self.net_layer_info[key]['tile_rows'] = self.net_layer_info[key]['tiles_rc'][0]
 			self.net_layer_info[key]['tile_cols'] = self.net_layer_info[key]['tiles_rc'][1]
-			self.new_data_available["net_layer_info"] = True
+		with self.data_available_lock:
+			self.base_data["netLayerInfo"] = None
 
 	def start(self):
 		self.state = CaffeVisAppState(self.net, self.settings, self.bindings, self.net_layer_info)
@@ -240,24 +246,27 @@ class CaffeVisApp(BaseApp):
 			if 'caffevis_layers' in panes:
 				layer_data_3D_highres = self._draw_layer_pane(panes['caffevis_layers'])
 				layer_data_3D_uint8 = ensure_uint255(layer_data_3D_highres)
-				self.new_data_available["layer_data"] = True
-				self.data_webapp["layer_data"] = layer_data_3D_uint8
+				if self.state.new_layer_data:
+					with self.data_available_lock:
+						self.new_data_available["layer_data"] = True
+						self.data_webapp["layer_data"] = layer_data_3D_uint8
+						send_event("test", "update", {"type": "layerData"})
 			if 'caffevis_aux' in panes:
 				self._draw_aux_pane(panes['caffevis_aux'], layer_data_3D_highres)
 			if 'caffevis_back' in panes:
 				# Draw back pane as normal
 				back_draw_image = self._draw_back_pane(panes['caffevis_back'])
 				if back_draw_image is not None:
-					print("back draw is down")
-					self.new_data_available["back_draw_image"] = True
-					self.data_webapp["back_draw_image"] = ensure_uint255(back_draw_image)
+					with self.data_available_lock:
+						self.new_data_available["backDrawImage"] = True
+						self.data_webapp["backDrawImage"] = ensure_uint255(back_draw_image)
+						send_event("test", "update", {"type": "backPane"})
 				if self.state.layers_pane_zoom_mode == 2:
 					# ALSO draw back pane into layers pane
 					back_draw_image = self._draw_back_pane(panes['caffevis_layers'])
 
 			if 'caffevis_jpgvis' in panes:
 				self._draw_jpgvis_pane(panes['caffevis_jpgvis'])
-				self.new_data_available["jpgvis_pane"] = True
 			with self.state.lock:
 				self.state.drawing_stale = False
 				self.state.caffe_net_state = 'free'
@@ -266,12 +275,13 @@ class CaffeVisApp(BaseApp):
 	def _prob_labels(self):
 		probs_flat = self.net.blobs[self.settings.caffevis_prob_layer].data.flatten()
 		top_5 = probs_flat.argsort()[-1:-6:-1]
-		self.data_webapp["prob_label"] = []
+		temp_data = []
 		for idx in top_5:
 			prob = probs_flat[idx]
 			text = '%.2f %s' % (prob, self.labels[idx])
-			self.data_webapp["prob_label"].append([text, prob > 0.40])
-		self.new_data_available["prob_label"] = True
+			temp_data.append([text, prob > 0.40])
+		with self.data_available_lock:
+			self.base_data["probLabel"] = temp_data.copy()
 
 	def _draw_prob_labels_pane(self, pane):
 		'''Adds text label annotation atop the given pane.'''

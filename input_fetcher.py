@@ -11,7 +11,9 @@ from misc import tsplit
 
 
 class InputImageFetcher(CodependentThread):
-	'''Fetches images from a webcam or loads from a directory.'''
+	"""
+	Fetches images from a webcam or loads from a directory.
+	"""
 
 	def __init__(self, settings):
 		CodependentThread.__init__(self, settings.input_updater_heartbeat_required)
@@ -87,7 +89,7 @@ class InputImageFetcher(CodependentThread):
 				print('WARNING: ignoring set_mode_cam, no cam present')
 			else:
 				self.static_file_mode = False
-				assert self.bound_cap_device != None, 'Call bind_camera first'
+				assert self.bound_cap_device is not None, 'Call bind_camera first'
 
 	def toggle_input_mode(self):
 		with self.lock:
@@ -143,10 +145,11 @@ class InputImageFetcher(CodependentThread):
 	# print 'InputImageFetcher: read', self.read_frames, 'frames'
 
 	def get_frame(self):
-		'''Fetch the latest frame_idx and frame. The idx increments
+		"""
+		Fetch the latest frame_idx and frame. The idx increments
 		any time the frame data changes. If the idx is < 0, the frame
 		is not valid.
-		'''
+		"""
 		with self.lock:
 			return (self.latest_frame_idx, self.latest_frame_data)
 

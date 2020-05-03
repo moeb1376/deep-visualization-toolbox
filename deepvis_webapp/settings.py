@@ -36,9 +36,12 @@ INSTALLED_APPS = [
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'caffevis_API',
+	'channels',
+	'django_eventstream',
 ]
 
 MIDDLEWARE = [
+	'django_grip.GripMiddleware',
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
 	'django.middleware.common.CommonMiddleware',
@@ -67,6 +70,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'deepvis_webapp.wsgi.application'
+
+ASGI_APPLICATION = 'deepvis_webapp.routing.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
@@ -119,3 +124,7 @@ STATICFILES_DIRS = [
 ]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "models", "caffenet-yos", "unit_jpg_vis")
+
+# EVENTSTREAM_STORAGE_CLASS = 'django_eventstream.storage.DjangoModelStorage'
+EVENTSTREAM_ALLOW_ORIGIN = '127.0.0.1:8000'
+EVENTSTREAM_ALLOW_CREDENTIALS = True
