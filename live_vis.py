@@ -18,6 +18,7 @@ from misc import WithTimer
 from image_misc import cv2_imshow_rgb, FormattedString, cv2_typeset_text, to_255
 from bindings import bindings
 from input_fetcher import InputImageFetcher
+from django_eventstream import send_event
 
 pane_debug_clr = (255, 64, 64)
 import settings as SETTINGS
@@ -202,6 +203,7 @@ class LiveVis(object):
 				latest_frame_idx = fr_idx
 				latest_frame_data = fr_data
 				frame_for_apps = fr_data
+				send_event("test", "update", {"type": "inputFrameUpdate"})
 
 			if is_new_frame:
 				with WithTimer('LiveVis.display_frame', quiet=self.debug_level < 1):

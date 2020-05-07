@@ -44,13 +44,27 @@
 <!-- # -->
 <div class="row">
     <div class="col s3  ">
-        <div class="center-align" id="input_frame">
-            <canvas id="input_canvas" class="responsive-canvas">
-                Your browser does not support the HTML5 canvas tag.
-            </canvas>
-        </div>
+
         <div>
             <ul class="collapsible expandable">
+                <li class="active">
+                    <div class="collapsible-header"><i class="material-icons">input</i>Input image</div>
+                    <div class="collapsible-body">
+                        <div class="center-align" id="input_frame">
+                            <canvas id="input_canvas" class="responsive-canvas">
+                                Your browser does not support the HTML5 canvas tag.
+                            </canvas>
+                        </div>
+                        <div>
+                            <a class="waves-effect waves-teal btn-flat input-image-btn" name="before">
+                                <i class="material-icons">navigate_before</i></a>
+                            <a class="waves-effect waves-teal btn-flat input-image-btn" style="float: right"
+                               name="next">
+                                <i class="material-icons">navigate_next</i></a>
+                        </div>
+
+                    </div>
+                </li>
                 <li>
                     <div class="collapsible-header"><i class="material-icons">label</i>Label predictions</div>
                     <div class="collapsible-body" id="prob_label">
@@ -84,15 +98,43 @@
                         </span>
                     </div>
                 </li>
+                <li>
+                    <div class="collapsible-header">
+                        <i class="material-icons">image</i>
+                        Gradient ascent
+                    </div>
+                    <div class="collapsible-body">
+                        <img id="regularized" src="" style="width: 100%" class="responsive-img">
+                    </div>
+                </li>
+                <li>
+                    <div class="collapsible-header">
+                        <i class="material-icons">image</i>
+                        Top 9 image
+                    </div>
+                    <div class="collapsible-body">
+                        <img id="top_img" src="" style="width: 100%" class="responsive-img">
+                    </div>
+                </li>
+                <li>
+                    <div class="collapsible-header">
+                        <i class="material-icons">image</i>
+                        Deconv of top 9
+                    </div>
+                    <div class="collapsible-body">
+                        <img id="max_deconv" src="" style="width: 100%" class="responsive-img">
+                    </div>
+                </li>
+
             </ul>
         </div>
     </div>
-    <div class="col s6">
+    <div class="col s9 ">
         <p class="range-field" style="width: 50%">
-            <input type="range" id="zoom_layer" min="10" max="100" value="10"/>
+            <input type="range" id="zoom_layer" min="1" max="100" value="7"/>
             <label for="zoom_layer">Layers Zoom</label>
         </p>
-        <ul class="tabs" id="layers">
+        <ul class="tabs " id="layers">
             {% for tab in net_layer_info %}
                 {% if forloop.counter == 1 %}
                     <li class="tab"><a class="active" href="#{{ tab }}" name="{{ tab }}_1">{{ tab }}</a></li>
@@ -106,20 +148,7 @@
             </div>
         {% endfor %}
     </div>
-    <div class="col s3">
-        <div class="center-align">
-            <h5>Gradient ascent</h5>
-            <img id="regularized" src="" style="width: 100%" class="responsive-img">
-        </div>
-        <div class="center-align">
-            <h5>Top 9 image</h5>
-            <img id="top_img" src="" style="width: 100%" class="responsive-img">
-        </div>
-        <div class="center-align">
-            <h5>Deconv of top 9</h5>
-            <img id="max_deconv" src="" class="responsive-img" style="width: 100%">
-        </div>
-    </div>
+
 </div>
 <!-- Compiled and minified JavaScript -->
 <script src="{% static 'materialize.min.js' %}"></script>
@@ -134,15 +163,15 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         // materialize init
-        let collapsible_elems = document.querySelectorAll('.collapsible');
-        let collapsible_options = {accordion: false};
-        let collapsible_instances = M.Collapsible.init(collapsible_elems, collapsible_options);
-        let sidenav_elems = document.querySelectorAll('.sidenav');
-        let sidenav_option = {};
-        let sidenav_instances = M.Sidenav.init(sidenav_elems, sidenav_option);
-        let tabs_elems = document.querySelectorAll('.tabs');
-        let tabs_options = {}
-        let tabs_instances = M.Tabs.init(tabs_elems, tabs_options);
+        let collapsibleElems = document.querySelectorAll('.collapsible');
+        let collapsibleOptions = {accordion: false};
+        let collapsibleInstances = M.Collapsible.init(collapsibleElems, collapsibleOptions);
+        let sidenavElems = document.querySelectorAll('.sidenav');
+        let sidenavOption = {};
+        let sidenavInstances = M.Sidenav.init(sidenavElems, sidenavOption);
+        let tabsElems = document.querySelectorAll('.tabs');
+        let tabsOptions = {}
+        let tabsInstances = M.Tabs.init(tabsElems, tabsOptions);
 
 
         // caffevis init

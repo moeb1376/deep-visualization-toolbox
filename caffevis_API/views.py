@@ -1,3 +1,4 @@
+from base64 import b64encode
 from time import sleep
 
 from django.http import JsonResponse, HttpResponseBadRequest
@@ -69,15 +70,15 @@ def update_input_frame(request):
 def prob_label(request):
 	while app is None:
 		continue
-	print(app.new_data_available)
 	if app.new_data_available["prob_label"]:
-		print(app.data_webapp["prob_label"])
-		for data in app.data_webapp["prob_label"]:
+		with app.data_available_lock:
+			datas = app.data_webapp["prob_label"][:]
+		for data in datas:
 			data[1] = 1 if data[1] else 0
-		print(app.data_webapp["prob_label"])
-		return JsonResponse({"data": app.data_webapp["prob_label"]})
+		app.new_data_available["prob_label"] = False
+		return JsonResponse({"data": datas}, status=200)
 	else:
-		return JsonResponse({"data": "none"})
+		return JsonResponse({}, status=400)
 
 
 def layer_data(request):
@@ -85,6 +86,7 @@ def layer_data(request):
 	if app.new_data_available["layer_data"] and app.state.new_layer_data:
 		data = app.data_webapp["layer_data"]
 		shape = data.shape
+		print(b64encode(data[0]))
 		data = data.tolist()
 		selected_layer = app.state.layer
 		app.new_data_available["layer_data"] = False
@@ -132,3 +134,22 @@ def change_selected_layer(request):
 		app.state.change_selected_layer(idx)
 		return JsonResponse({}, status=200)
 	return HttpResponseBadRequest()
+
+
+@csrf_exempt
+def change_input_image(request):
+	command = request.POST.get("command", None)
+	if command == "next":
+		if lv.input_updater.static_file_mode:
+			lv.input_updater.increment_static_file_idx(1)
+		else:
+			lv.input_updater.toggle_input_mode()
+		app.state.new_layer_data = True
+		return JsonResponse({}, status=200)
+	elif command == "before":
+		if lv.input_updater.static_file_mode:
+			lv.input_updater.increment_static_file_idx(-1)
+		else:
+			lv.input_updater.toggle_input_mode()
+		app.state.new_layer_data = True
+		return JsonResponse({}, status=200)

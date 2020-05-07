@@ -54,6 +54,7 @@ li.indicator {
 .layer_canvas {
     border: transparent solid 2px;
     margin-bottom: -5px;
+    width: 7%;
 }
 
 .layer_canvas:hover {
@@ -62,4 +63,13 @@ li.indicator {
 
 .layer_canvas.active {
     border: #00838f solid 2px;
+}
+.collapsible-header{
+    padding: 8px 1rem;
+}
+.layer-zoom{
+    width: 95vh !important;
+    position: absolute !important;
+    left: 25%;
+    margin-bottom: 10px;
 }

@@ -283,6 +283,10 @@ class CaffeVisApp(BaseApp):
 			temp_data.append([text, prob > 0.40])
 		with self.data_available_lock:
 			self.base_data["probLabel"] = temp_data.copy()
+			self.new_data_available["prob_label"] = True
+			self.data_webapp["prob_label"] = temp_data.copy()
+			print(temp_data)
+			send_event("test", "update", {"type": "probLabel"})
 
 	def _draw_prob_labels_pane(self, pane):
 		'''Adds text label annotation atop the given pane.'''

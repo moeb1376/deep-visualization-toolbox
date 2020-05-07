@@ -55,19 +55,30 @@ function updateLayerData(result) {
     }
     let lastActive = "";
     $(".layer_canvas").click((event) => {
-        if (lastActive !== "") {
+        let target = event.target;
+        if (lastActive !== "" && lastActive !== target) {
             lastActive.classList.remove("active");
+            if (lastActive.classList.contains("layer-zoom")) {
+                lastActive.classList.remove("layer-zoom")
+            }
         }
-        event.target.classList.add("active");
-        lastActive = event.target;
-        let name = event.target.getAttribute("name");
+        if (target.classList.contains("active")) {
+            if (target.classList.contains("layer-zoom")) {
+                target.classList.remove("layer-zoom");
+            } else {
+                target.classList.add("layer-zoom");
+            }
+        } else {
+            target.classList.add("active");
+        }
+        lastActive = target;
+        let name = target.getAttribute("name");
         let number = parseInt(name.split(":")[1], 10);
         updateSelectedChannelImg(data[number], [shape[1], shape[2]]);
         // updateJpgvis(event.target.getAttribute("name"));
-        console.log("canvas layer click");
         let updateSelectedUnit = $.ajax({url: "/api/update_selected_unit/", method: "POST", data: {"number": number}});
         updateSelectedUnit.done(result => console.log(result));
-        listOfFunction.updateJpgvis(event.target.getAttribute("name"));
+        listOfFunction.updateJpgvis(target.getAttribute("name"));
 
         // updateBackPane(number);
     });
@@ -75,7 +86,6 @@ function updateLayerData(result) {
 
 //change layer width
 $("#zoom_layer").change(event => {
-    console.log(event.target.value);
     let value = event.target.value;
     $('.layer_canvas').css('width', `${value}%`);
 });
@@ -106,7 +116,6 @@ let arrowFunctionUpdateJpgvis = (name) => {
     }
     layer = layer.replace('pool', "conv");
     layer = layer.replace('norm', "conv");
-    console.log("layer: " + layer);
     number = "0".repeat(4 - number.length) + number;
     $("#max_deconv").attr("src", "/media/max_deconv/" + layer + "/" + layer + "_" + number + ".jpg");
     $("#top_img").attr("src", "/media/max_im/" + layer + "/" + layer + "_" + number + ".jpg");
@@ -153,10 +162,47 @@ let getLayerData = () => {
     let getLayerData = $.ajax({url: "/api/layer_data/", method: "GET"});
     getLayerData.done(updateLayerData);
 };
+//input image change
+$(".input-image-btn").click(event => {
+    let nextInputImage = $.ajax({
+        url: "/api/change_input_image/",
+        method: "POST",
+        data: {"command": event.currentTarget.name}
+    });
+    nextInputImage.done(result => console.log(result));
+});
+let getInputImageData = () => {
+    let getInputFrame = $.ajax({url: "/api/input_frame/", method: "GET"});
+    getInputFrame.done(updateInputFrame);
+};
+// new problabel
+let updateLabelPane = (result => {
+    console.log(result);
+    let data = result.data;
+    let probLabelDiv = $("#prob_label");
+    probLabelDiv.empty();
+    Object.values(data).forEach((value) => {
+        let spanLabel = document.createElement("span");
+        if (value[1]) {
+            spanLabel.classList.add("green-text");
+            spanLabel.classList.add("text-darken-4");
+        }
+        spanLabel.innerText = value[0];
+        probLabelDiv.append(spanLabel);
+        probLabelDiv.append(document.createElement("br"));
+    });
+});
+let getProbLabel = () => {
+    let getLabelData = $.ajax({url: "/api/prob_label/", method: "GET"});
+    getLabelData.done(updateLabelPane);
+};
+
 let listOfFunction = {
     "updateJpgvis": arrowFunctionUpdateJpgvis,
     "backPane": getBackPaneData,
-    "layerData": getLayerData
+    "layerData": getLayerData,
+    "inputFrameUpdate": getInputImageData,
+    "probLabel": getProbLabel
 };
 
 // caffevis init
